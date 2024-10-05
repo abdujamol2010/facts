@@ -1,0 +1,16 @@
+{% extends 'main/lite.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+
+{% block content %}
+    <div class="pong">
+        <h1>{{ title }}</h1>
+        <p>loner ipsum dodsako dasodkok asdksdak dasodkkd asdfkdfsd ubvf bvy v78trwegruwtr yvtcseytrvtcr tcgryusetbrbc7e7</p>
+        <button class="btn btn-warning">на страницу про нас</button>
+
+        {% for val in values %}
+            <p>{{ val }}</p>
+        {% endfor %}
+    </div>
+{% endblock %}
