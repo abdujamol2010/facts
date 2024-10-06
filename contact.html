@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Контакты</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(45deg, #ff7e5f, #feb47b, #86e3ce, #d4a5a5, #83a4d4, #b6fbff);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: #333;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+
+        header {
+            background-color: rgba(51, 51, 51, 0.8);
+            color: #fff;
+            padding: 20px 0;
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .container {
+            width: 80%;
+            margin: auto;
+            padding: 20px;
+            max-width: 800px;
+            z-index: 2;
+            position: relative;
+        }
+
+        .content {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .content h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .content p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+        }
+
+        .contact-item {
+            margin: 15px 0;
+        }
+
+        .contact-item a {
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .contact-item a:hover {
+            text-decoration: underline;
+        }
+
+        /* Плавающие слова */
+        .floating-words {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-words span {
+            position: absolute;
+            font-size: 2rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.2);
+            animation: float 5s ease-in-out infinite;
+        }
+
+        /* Позиционирование и анимация для каждого слова */
+        .word1 { top: 10%; left: 20%; animation-duration: 7s; }
+        .word2 { top: 30%; left: 60%; animation-duration: 6s; }
+        .word3 { top: 50%; left: 40%; animation-duration: 8s; }
+        .word4 { top: 70%; left: 10%; animation-duration: 10s; }
+        .word5 { top: 80%; left: 70%; animation-duration: 9s; }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Контакты</h1>
+    </header>
+
+    <!-- Плавающие слова -->
+    <div class="floating-words">
+        <span class="word1">Python</span>
+        <span class="word2">Django</span>
+        <span class="word3">Flask</span>
+        <span class="word4">Pandas</span>
+        <span class="word5">NumPy</span>
+    </div>
+
+    <div class="container">
+        <div class="content">
+            <h2>Свяжитесь со мной</h2>
+            <p>Если у вас есть вопросы или предложения, вы можете связаться со мной через следующие каналы:</p>
+
+            <div class="contact-item">
+                <p><strong>Электронная почта:</strong></p>
+                <p><a href="mailto:promoera084@gmail.com">promoera084@gmail.com</a></p>
+            </div>
+
+            <div class="contact-item">
+                <p><strong>Telegram:</strong></p>
+                <p><a href="https://t.me/Pyproger001" target="_blank">@Pyproger001</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
