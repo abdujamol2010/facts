@@ -245,4 +245,130 @@
             <input type="number" step="0.01" id="product-price" placeholder="Цена товара" required>
             <button type="submit">Добавить товар</button>
         </form>
+        <h2>Список товаров</h2>
+        <table id="products-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Изображение</th>
+                    <th>Цена</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Товары будут добавлены здесь -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const ADMIN_PASSWORD = 'FAYS+';
+
+        function login() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('admin-section').style.display = 'block';
+                loadProducts();
+            } else {
+                document.getElementById('login-error').innerText = 'Неверный пароль!';
+            }
+        }
+
+        function getProducts() {
+            const products = localStorage.getItem('products');
+            return products ? JSON.parse(products) : [];
+        }
+
+        function saveProducts(products) {
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        function loadProducts() {
+            const products = getProducts();
+            const tbody = document.querySelector('#products-table tbody');
+            tbody.innerHTML = '';
+            products.forEach(product => {
+                const tr = document.createElement('tr');
+
+                const tdId = document.createElement('td');
+                tdId.innerText = product.id;
+                tr.appendChild(tdId);
+
+                const tdName = document.createElement('td');
+                tdName.innerText = product.name;
+                tr.appendChild(tdName);
+
+                const tdImage = document.createElement('td');
+                const img = document.createElement('img');
+                img.src = product.image;
+                img.alt = product.name;
+                tdImage.appendChild(img);
+                tr.appendChild(tdImage);
+
+                const tdPrice = document.createElement('td');
+                tdPrice.innerText = product.price;
+                tr.appendChild(tdPrice);
+
+                const tdActions = document.createElement('td');
+                const editBtn = document.createElement('button');
+                editBtn.innerText = 'Редактировать';
+                editBtn.onclick = () => editProduct(product.id);
+                tdActions.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerText = 'Удалить';
+                deleteBtn.onclick = () => deleteProduct(product.id);
+                tdActions.appendChild(deleteBtn);
+
+                tr.appendChild(tdActions);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('add-product-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('product-name').value;
+            const image = document.getElementById('product-image').value;
+            const price = parseFloat(document.getElementById('product-price').value).toFixed(2);
+            const products = getProducts();
+            const newProduct = {
+                id: Date.now(),
+                name,
+                image,
+                price
+            };
+            products.push(newProduct);
+            saveProducts(products);
+            loadProducts();
+            this.reset();
+        });
+
+        function editProduct(id) {
+            const products = getProducts();
+            const product = products.find(p => p.id === id);
+            if (product) {const newName = prompt('Введите новое название товара:', product.name);
+                const newImage = prompt('Введите новый URL изображения:', product.image);
+                const newPrice = prompt('Введите новую цену товара:', product.price);
+                if (newName && newImage && newPrice) {
+                    product.name = newName;
+                    product.image = newImage;
+                    product.price = parseFloat(newPrice).toFixed(2);
+                    saveProducts(products);
+                    loadProducts();
+                }
+            }
+        }
+
+        function deleteProduct(id) {
+            let products = getProducts();
+            products = products.filter(p => p.id !== id);
+            saveProducts(products);
+            loadProducts();
+        }
+    </script>
+</body>
+</html>
                 
