@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Страница администратора</title>
+    <title>Страница заказа</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #eef;
             color: #333;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 600px;
+            max-width: 700px;
             margin: auto;
             background: #fff;
             padding: 20px;
@@ -23,13 +23,40 @@
         h1 {
             text-align: center;
         }
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .product-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+            text-align: center;
+        }
+        .product-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .product-item h3 {
+            margin: 10px 0 5px;
+        }
+        .product-item p {
+            margin: 5px 0;
+        }
+        .order-section {
+            margin-top: 30px;
+        }
         label {
             display: block;
             margin: 10px 0 5px;
         }
         input[type="text"],
-        input[type="number"],
-        input[type="file"] {
+        input[type="number"] {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -39,149 +66,60 @@
         button {
             width: 100%;
             padding: 10px;
-            background-color: #5cb85c;
+            background-color: #25D366;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-bottom: 10px;
+            font-size: 1em;
         }
         button:hover {
-            background-color: #4cae4c;
+            background-color: #1DA851;
         }
-        .hidden {
-            display: none;
-        }
-        .product-list {
+        #orderMessage {
             margin-top: 20px;
-        }
-        .product-item {
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .product-item img {
-            max-width: 100px;
-            margin-right: 20px;
-            border-radius: 5px;
-        }
-        .product-details {
-            flex-grow: 1;
-        }
-        .delete-btn {
-            background-color: #d9534f;
-        }
-        .delete-btn:hover {
-            background-color: #c9302c;
+            color: green;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Админ-панель</h1>
+        <h1>Оформить заказ</h1>
 
-        <!-- Форма входа -->
-        <form id="loginForm">
-            <label for="adminCode">Введите код для доступа:</label>
-            <input type="password" id="adminCode" placeholder="Код доступа" required>
-            <button type="submit">Войти</button>
-            <p id="loginError" style="color:red;"></p>
-        </form>
+        <div class="product-list" id="productList">
+            <!-- Товары будут добавлены здесь -->
+        </div>
 
-        <!-- Форма добавления товара (скрыта по умолчанию) -->
-        <div id="addProductSection" class="hidden">
-            <h2>Добавить товар</h2>
-            <form id="addProductForm">
-                <label for="productName">Название товара:</label>
-                <input type="text" id="productName" placeholder="Введите название товара" required>
+        <div class="order-section">
+            <h2>Ваши данные</h2>
+            <form id="orderForm">
+                <label for="customerName">Ваше имя:</label>
+                <input type="text" id="customerName" placeholder="Введите ваше имя" required>
                 
-                <label for="productPrice">Цена товара (сомони):</label>
-                <input type="number" id="productPrice" placeholder="Введите цену товара" min="0" step="0.01" required>
+                <label for="customerAddress">Ваш адрес:</label>
+                <input type="text" id="customerAddress" placeholder="Введите ваш адрес" required>
                 
-                <label for="productImage">Изображение товара:</label>
-                <input type="file" id="productImage" accept="image/*" required>
+                <label for="customerPhone">Ваш номер телефона (Таджикистан):</label>
+                <input type="text" id="customerPhone" placeholder="Например, +992123456789" pattern="^\+?992\d{9}$" required>
                 
-                <button type="submit">Добавить товар</button>
+                <button type="button" id="sendOrder">Отправить заказ через WhatsApp</button>
             </form>
-
-            <h2>Список товаров</h2>
-            <div id="productList" class="product-list">
-                <!-- Здесь будут отображаться добавленные товары -->
-            </div>
+            <p id="orderMessage"></p>
         </div>
     </div>
 
     <script>
-        const ADMIN_CODE = "FAYS+";
+        const productListDiv = document.getElementById('productList');
+        const sendOrderBtn = document.getElementById('sendOrder');
+        const orderMessage = document.getElementById('orderMessage');
 
-        // Получение элементов
-        const loginForm = document.getElementById('loginForm');
-        const adminCodeInput = document.getElementById('adminCode');
-        const loginError = document.getElementById('loginError');
-        const addProductSection = document.getElementById('addProductSection');
-        const addProductForm = document.getElementById('addProductForm');
-        const productList = document.getElementById('productList');
+        // Загрузка товаров из localStorage и отображение на странице
+        const products = JSON.parse(localStorage.getItem('products')) || [];
 
-        // Обработчик входа
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const enteredCode = adminCodeInput.value.trim();
-            if (enteredCode === ADMIN_CODE) {
-                loginForm.classList.add('hidden');
-                addProductSection.classList.remove('hidden');
-                loadProducts();
-            } else {
-                loginError.textContent = "Неверный код доступа!";
-            }
-        });
-
-        // Обработчик добавления товара
-        addProductForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const name = document.getElementById('productName').value.trim();
-            const price = parseFloat(document.getElementById('productPrice').value.trim()).toFixed(2);
-            const imageFile = document.getElementById('productImage').files[0];
-
-            if (name === "" || isNaN(price) || !imageFile) {
-                alert("Пожалуйста, заполните все поля и выберите изображение.");
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageBase64 = e.target.result;
-
-                const products = JSON.parse(localStorage.getItem('products')) || [];
-                const newProduct = {
-                    id: Date.now(),
-                    name: name,
-                    price: price,
-                    image: imageBase64
-                };
-                products.push(newProduct);
-                localStorage.setItem('products', JSON.stringify(products));
-
-                addProductForm.reset();
-                loadProducts();
-                alert("Товар добавлен успешно!");
-            };
-            reader.readAsDataURL(imageFile);
-        });
-
-        // Функция загрузки и отображения товаров
-        function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('products')) || [];
-            productList.innerHTML = "";
-
-            if (products.length === 0) {
-                productList.innerHTML = "<p>Нет добавленных товаров.</p>";
-                return;
-            }
-
+        if (products.length === 0) {
+            productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
+        } else {
             products.forEach(product => {
                 const productDiv = document.createElement('div');
                 productDiv.classList.add('product-item');
@@ -190,33 +128,81 @@
                 img.src = product.image;
                 img.alt = product.name;
 
-                const detailsDiv = document.createElement('div');
-                detailsDiv.classList.add('product-details');
-                detailsDiv.innerHTML = `<strong>${product.name}</strong><br>Цена: ${product.price} сомони`;
+                const name = document.createElement('h3');
+                name.textContent = product.name;
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = "Удалить";
-                deleteBtn.classList.add('delete-btn');
-                deleteBtn.addEventListener('click', function() {
-                    deleteProduct(product.id);
-                });
+                const price = document.createElement('p');
+                price.textContent = `Цена: ${product.price} сомони`;
+
+                const quantityLabel = document.createElement('label');
+                quantityLabel.textContent = "Количество:";
+                quantityLabel.setAttribute('for', `quantity-${product.id}`);
+
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'number';
+                quantityInput.id = `quantity-${product.id}`;
+                quantityInput.min = '0';
+                quantityInput.value = '0';
 
                 productDiv.appendChild(img);
-                productDiv.appendChild(detailsDiv);
-                productDiv.appendChild(deleteBtn);
+                productDiv.appendChild(name);
+                productDiv.appendChild(price);
+                productDiv.appendChild(quantityLabel);
+                productDiv.appendChild(quantityInput);
 
-                productList.appendChild(productDiv);
+                productListDiv.appendChild(productDiv);
             });
         }
 
-        // Функция удаления товара
-        function deleteProduct(id) {
-            let products = JSON.parse(localStorage.getItem('products')) || [];
-            products = products.filter(product => product.id !== id);
-            localStorage.setItem('products', JSON.stringify(products));
-            loadProducts();
-            alert("Товар удален.");
-        }
+        // Обработчик отправки заказа через WhatsApp
+        sendOrderBtn.addEventListener('click', function() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerAddress = document.getElementById('customerAddress').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+
+            if (customerName === "" || customerAddress === "" || customerPhone === "") {
+                alert("Пожалуйста, заполните все поля.");
+                return;
+            }
+
+            // Проверка формата номера телефона
+            const phonePattern = /^\+?992\d{9}$/;
+            if (!phonePattern.test(customerPhone)) {
+                alert("Пожалуйста, введите корректный номер телефона (например, +992123456789).");
+                return;
+            }
+
+            // Сбор информации о заказанных товарах
+            const orderedProducts = [];
+            products.forEach(product => {
+                const qty = parseInt(document.getElementById(`quantity-${product.id}`).value);
+                if (qty > 0) {
+                    orderedProducts.push(`${product.name} - ${qty} шт.`);
+                }
+            });
+
+            if (orderedProducts.length === 0) {
+                alert("Пожалуйста, выберите хотя бы один товар.");
+                return;
+            }
+
+            const message = `📦 *Новый заказ*\n\n*Имя:* ${customerName}\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
+
+            const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
+            const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+            // Открытие WhatsApp с предзаполненным сообщением
+            window.open(url, '_blank');
+
+            // Вывод сообщения об успешной отправке
+            orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
+            document.getElementById('orderForm').reset();
+
+            // Сброс количеств товаров
+            products.forEach(product => {
+                document.getElementById(`quantity-${product.id}`).value = '0';
+            });
+        });
     </script>
 </body>
 </html>
