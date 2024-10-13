@@ -2,135 +2,126 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Администратор</title>
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #ff9a9e, #fecfef);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #333;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            padding: 20px;
         }
-        .login-container, .admin-container {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        #admin-section {
+            display: none;
+        }
+        .hidden {
+            display: none;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        form input, form button {
+            display: block;
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            max-width: 300px;
+        }
+        table {
+            width: 100%;
+            max-width: 600px;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #aaa;
+        }
+        th, td {
+            padding: 10px;
             text-align: center;
         }
-        input[type="password"], input[type="text"], input[type="url"], input[type="number"] {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #6e45e2;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        button:hover {
-            background-color: #88d3ce;
-        }
-        .product-list {
-            margin-top: 20px;
-            text-align: left;
-        }
-        .product-item {
-            background: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+        img {
+            max-width: 100px;
+            height: auto;
         }
     </style>
 </head>
 <body>
-
-    <div class="login-container" id="login-container">
-        <h2>Вход Администратора</h2>
+    <h1>Страница администратора</h1>
+    <div id="login-section">
         <input type="password" id="admin-password" placeholder="Введите пароль">
-        <button onclick="validatePassword()">Войти</button>
+        <button onclick="login()">Войти</button>
+        <p id="login-error" style="color:red;"></p>
     </div>
 
-    <div class="admin-container" id="admin-container" style="display: none;">
-        <h2>Панель Администратора</h2>
+    <div id="admin-section">
+        <h2>Добавить товар</h2>
         <form id="add-product-form">
-            <input type="url" id="product-icon" placeholder="URL иконки товара" required>
             <input type="text" id="product-name" placeholder="Название товара" required>
-            <input type="number" id="product-price" placeholder="Цена товара (сомони)" required>
+            <input type="url" id="product-image" placeholder="URL изображения" required>
+            <input type="number" step="0.01" id="product-price" placeholder="Цена товара" required>
             <button type="submit">Добавить товар</button>
         </form>
-        <div class="product-list" id="product-list">
-            <h3>Текущие товары:</h3>
-            <!-- Здесь будут отображаться добавленные товары -->
-        </div>
+
+        <h2>Список товаров</h2>
+        <table id="products-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Изображение</th>
+                    <th>Цена</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Товары будут добавлены здесь -->
+            </tbody>
+        </table>
     </div>
 
     <script>
-        const correctPassword = "FAYS+";
+        const ADMIN_PASSWORD = 'FAYS+';
 
-        function validatePassword() {
-            const enteredPassword = document.getElementById('admin-password').value;
-            if (enteredPassword === correctPassword) {
-                document.getElementById('login-container').style.display = 'none';
-                document.getElementById('admin-container').style.display = 'block';
+        function login() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('admin-section').style.display = 'block';
+                loadProducts();
             } else {
-                alert('Неверный пароль!');
+                document.getElementById('login-error').innerText = 'Неверный пароль!';
             }
         }
 
-        // Массив для хранения товаров
-        let products = [];
-
-        // Обработка формы добавления товара
-        document.getElementById('add-product-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const icon = document.getElementById('product-icon').value;
-            const name = document.getElementById('product-name').value;
-            const price = document.getElementById('product-price').value;
-
-            const product = { icon, name, price };
-            products.push(product);
-            displayProducts();
-
-            // Очистка формы
-            this.reset();
-        });
-
-        // Функция отображения товаров
-        function displayProducts() {
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = '<h3>Текущие товары:</h3>';
-            products.forEach((product, index) => {
-                productList.innerHTML += `
-                    <div class="product-item">
-                        <img src="${product.icon}" alt="${product.name}" width="50">
-                        <strong>${product.name}</strong> - ${product.price} сомони
-                    </div>
-                `;
-            });
+        function getProducts() {
+            const products = localStorage.getItem('products');
+            return products ? JSON.parse(products) : [];
         }
 
-        // Сохранение товаров в LocalStorage
-        window.onload = function() {
-            if (localStorage.getItem('products')) {
-                products = JSON.parse(localStorage.getItem('products'));
-                displayProducts();
-            }
-        }
-
-        window.onbeforeunload = function() {
+        function saveProducts(products) {
             localStorage.setItem('products', JSON.stringify(products));
         }
-    </script>
 
-</body>
-</html>
+        function loadProducts() {
+            const products = getProducts();
+            const tbody = document.querySelector('#products-table tbody');
+            tbody.innerHTML = '';
+            products.forEach(product => {
+                const tr = document.createElement('tr');
+
+                const tdId = document.createElement('td');
+                tdId.innerText = product.id;
+                tr.appendChild(tdId);
+
+                const tdName = document.createElement('td');
+                tdName.innerText = product.name;
+                tr.appendChild(tdName);
+
+                const tdImage = document.createElement('td');
+                const img = document.createElement('img');
+                img.src = product.image;
+                img.alt = product.name;
+                tdImage.appendChild(img);
+                tr.appendChild(tdImage);
+
+                const tdPrice = document.createElement('td');
+                tdPrice.innerText = product.price;
+                tr.appendChild(tdPrice);
