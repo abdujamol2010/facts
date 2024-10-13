@@ -7,13 +7,13 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #eef;
             color: #333;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 600px;
+            max-width: 700px;
             margin: auto;
             background: #fff;
             padding: 20px;
@@ -23,11 +23,38 @@
         h1 {
             text-align: center;
         }
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .product-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+            text-align: center;
+        }
+        .product-item img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .product-item h3 {
+            margin: 10px 0 5px;
+        }
+        .product-item p {
+            margin: 5px 0;
+        }
+        .order-section {
+            margin-top: 30px;
+        }
         label {
             display: block;
             margin: 10px 0 5px;
         }
-        select,
         input[type="text"],
         input[type="number"] {
             width: 100%;
@@ -39,83 +66,142 @@
         button {
             width: 100%;
             padding: 10px;
-            background-color: #5cb85c;
+            background-color: #25D366;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 1em;
         }
         button:hover {
-            background-color: #4cae4c;
+            background-color: #1DA851;
         }
-        .product-image {
-            max-width: 100%;
-            height: auto;
-            margin: 20px 0;
+        #orderMessage {
+            margin-top: 20px;
+            color: green;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Страница заказа</h1>
-        <form id="orderForm">
-            <label for="product">Выберите товар:</label>
-            <select id="product" required></select>
-            
-            <img id="productImage" class="product-image" src="" alt="" style="display:none;">
-            
-            <label for="address">Ваш адрес:</label>
-            <input type="text" id="address" placeholder="Введите ваш адрес" required>
-            
-            <label for="phone">Ваш номер телефона:</label>
-            <input type="text" id="phone" placeholder="Введите ваш номер телефона" required>
-            
-            <button type="button" id="whatsappOrder">Отправить заказ в WhatsApp</button>
-        </form>
+        <h1>Оформить заказ</h1>
+
+        <div class="product-list" id="productList">
+            <!-- Товары будут добавлены здесь -->
+        </div>
+
+        <div class="order-section">
+            <h2>Ваши данные</h2>
+            <form id="orderForm">
+                <label for="customerName">Ваше имя:</label>
+                <input type="text" id="customerName" placeholder="Введите ваше имя" required>
+                
+                <label for="customerAddress">Ваш адрес:</label>
+                <input type="text" id="customerAddress" placeholder="Введите ваш адрес" required>
+                
+                <label for="customerPhone">Ваш номер телефона (Таджикистан):</label>
+                <input type="text" id="customerPhone" placeholder="Например, +992123456789" pattern="^\+?992\d{9}$" required>
+                
+                <button type="button" id="sendOrder">Отправить заказ через WhatsApp</button>
+            </form>
+            <p id="orderMessage"></p>
+        </div>
     </div>
 
     <script>
-        // Загрузка товаров из localStorage и отображение в выпадающем списке
+        const productListDiv = document.getElementById('productList');
+        const sendOrderBtn = document.getElementById('sendOrder');
+        const orderMessage = document.getElementById('orderMessage');
+
+        // Загрузка товаров из localStorage и отображение на странице
         const products = JSON.parse(localStorage.getItem('products')) || [];
-        const productSelect = document.getElementById('product');
 
-        products.forEach(product => {
-            const option = document.createElement('option');
-            option.value = product.name;
-            option.textContent = `${product.name} - ${product.price} сомони`;
-            productSelect.appendChild(option);
-        });
+        if (products.length === 0) {
+            productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
+        } else {
+            products.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.classList.add('product-item');
 
-        // Отображение изображения выбранного товара
-        productSelect.addEventListener('change', function() {
-            const selectedProduct = productSelect.value;
-            const selectedProductData = products.find(product => product.name === selectedProduct);
-            const productImage = document.getElementById('productImage');
+                const img = document.createElement('img');
+                img.src = product.image;
+                img.alt = product.name;
 
-            if (selectedProductData) {
-                productImage.src = selectedProductData.image; // Устанавливаем источник изображения
-                productImage.alt = selectedProductData.name; // Устанавливаем alt текст
-                productImage.style.display = 'block'; // Показываем изображение
-            } else {
-                productImage.src = ''; // Скрываем изображение, если ничего не выбрано
-                productImage.style.display = 'none';
+                const name = document.createElement('h3');
+                name.textContent = product.name;
+
+                const price = document.createElement('p');
+                price.textContent = `Цена: ${product.price} сомони`;
+
+                const quantityLabel = document.createElement('label');
+                quantityLabel.textContent = "Количество:";
+                quantityLabel.setAttribute('for', `quantity-${product.id}`);
+
+                const quantityInput = document.createElement('input');
+                quantityInput.type = 'number';
+                quantityInput.id = `quantity-${product.id}`;
+                quantityInput.min = '0';
+                quantityInput.value = '0';
+
+                productDiv.appendChild(img);
+                productDiv.appendChild(name);
+                productDiv.appendChild(price);
+                productDiv.appendChild(quantityLabel);
+                productDiv.appendChild(quantityInput);
+
+                productListDiv.appendChild(productDiv);
+            });
+        }
+
+        // Обработчик отправки заказа через WhatsApp
+        sendOrderBtn.addEventListener('click', function() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerAddress = document.getElementById('customerAddress').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+
+            if (customerName === "" || customerAddress === "" || customerPhone === "") {
+                alert("Пожалуйста, заполните все поля.");
+                return;
             }
-        });
 
-        document.getElementById('whatsappOrder').addEventListener('click', function() {
-            const selectedProduct = productSelect.value;
-            const selectedProductData = products.find(product => product.name === selectedProduct);
-            const selectedPrice = selectedProductData.price;
-            const address = document.getElementById('address').value;
-            const phone = document.getElementById('phone').value;
+            // Проверка формата номера телефона
+            const phonePattern = /^\+?992\d{9}$/;
+            if (!phonePattern.test(customerPhone)) {
+                alert("Пожалуйста, введите корректный номер телефона (например, +992123456789).");
+                return;
+            }
 
-            // Создаем предзаполненное сообщение
-            const message = `Я хочу заказать:\nТовар: ${selectedProduct}\nЦена: ${selectedPrice} сомони\nАдрес: ${address}\nТелефон: ${phone}`;
-            const whatsappNumber = '992928001604'; // Замените на ваш номер без +
+            // Сбор информации о заказанных товарах
+            const orderedProducts = [];
+            products.forEach(product => {
+                const qty = parseInt(document.getElementById(`quantity-${product.id}`).value);
+                if (qty > 0) {
+                    orderedProducts.push(`${product.name} - ${qty} шт.`);
+                }
+            });
+
+            if (orderedProducts.length === 0) {
+                alert("Пожалуйста, выберите хотя бы один товар.");
+                return;
+            }
+
+            const message = `📦 *Новый заказ*\n\n*Имя:* ${customerName}\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
+
+            const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
             const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-            // Перенаправляем пользователя в WhatsApp
+            // Открытие WhatsApp с предзаполненным сообщением
             window.open(url, '_blank');
+
+            // Вывод сообщения об успешной отправке
+            orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
+            document.getElementById('orderForm').reset();
+
+            // Сброс количеств товаров
+            products.forEach(product => {
+                document.getElementById(`quantity-${product.id}`).value = '0';
+            });
         });
     </script>
 </body>
