@@ -51,6 +51,7 @@
         .product-image {
             max-width: 100%;
             height: auto;
+            margin: 20px 0;
         }
     </style>
 </head>
@@ -60,6 +61,8 @@
         <form id="orderForm">
             <label for="product">Выберите товар:</label>
             <select id="product" required></select>
+            
+            <img id="productImage" class="product-image" src="" alt="" style="display:none;">
             
             <label for="address">Ваш адрес:</label>
             <input type="text" id="address" placeholder="Введите ваш адрес" required>
@@ -81,6 +84,22 @@
             option.value = product.name;
             option.textContent = `${product.name} - ${product.price} сомони`;
             productSelect.appendChild(option);
+        });
+
+        // Отображение изображения выбранного товара
+        productSelect.addEventListener('change', function() {
+            const selectedProduct = productSelect.value;
+            const selectedProductData = products.find(product => product.name === selectedProduct);
+            const productImage = document.getElementById('productImage');
+
+            if (selectedProductData) {
+                productImage.src = selectedProductData.image; // Устанавливаем источник изображения
+                productImage.alt = selectedProductData.name; // Устанавливаем alt текст
+                productImage.style.display = 'block'; // Показываем изображение
+            } else {
+                productImage.src = ''; // Скрываем изображение, если ничего не выбрано
+                productImage.style.display = 'none';
+            }
         });
 
         document.getElementById('whatsappOrder').addEventListener('click', function() {
