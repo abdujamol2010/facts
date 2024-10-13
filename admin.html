@@ -44,74 +44,179 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-bottom: 10px;
         }
         button:hover {
             background-color: #4cae4c;
+        }
+        .hidden {
+            display: none;
+        }
+        .product-list {
+            margin-top: 20px;
+        }
+        .product-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .product-item img {
+            max-width: 100px;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+        .product-details {
+            flex-grow: 1;
+        }
+        .delete-btn {
+            background-color: #d9534f;
+        }
+        .delete-btn:hover {
+            background-color: #c9302c;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Админ-панель</h1>
-        <form id="adminForm">
-            <label for="code">Введите код для доступа:</label>
-            <input type="text" id="code" required>
-            
-            <div id="formContent" style="display: none;">
+
+        <!-- Форма входа -->
+        <form id="loginForm">
+            <label for="adminCode">Введите код для доступа:</label>
+            <input type="password" id="adminCode" placeholder="Код доступа" required>
+            <button type="submit">Войти</button>
+            <p id="loginError" style="color:red;"></p>
+        </form>
+
+        <!-- Форма добавления товара (скрыта по умолчанию) -->
+        <div id="addProductSection" class="hidden">
+            <h2>Добавить товар</h2>
+            <form id="addProductForm">
                 <label for="productName">Название товара:</label>
-                <input type="text" id="productName" required>
+                <input type="text" id="productName" placeholder="Введите название товара" required>
                 
-                <label for="productPrice">Цена товара:</label>
-                <input type="number" id="productPrice" required>
+                <label for="productPrice">Цена товара (сомони):</label>
+                <input type="number" id="productPrice" placeholder="Введите цену товара" min="0" step="0.01" required>
                 
                 <label for="productImage">Изображение товара:</label>
                 <input type="file" id="productImage" accept="image/*" required>
                 
                 <button type="submit">Добавить товар</button>
+            </form>
+
+            <h2>Список товаров</h2>
+            <div id="productList" class="product-list">
+                <!-- Здесь будут отображаться добавленные товары -->
             </div>
-        </form>
+        </div>
     </div>
 
     <script>
-        // Проверка кода доступа
-        document.getElementById('adminForm').onsubmit = function(event) {
-            event.preventDefault(); // Отменяем стандартное поведение формы
-            const code = document.getElementById('code').value;
+        const ADMIN_CODE = "FAYS+";
 
-            if (code === "FAYS+") {
-                document.getElementById('formContent').style.display = 'block';
+        // Получение элементов
+        const loginForm = document.getElementById('loginForm');
+        const adminCodeInput = document.getElementById('adminCode');
+        const loginError = document.getElementById('loginError');
+        const addProductSection = document.getElementById('addProductSection');
+        const addProductForm = document.getElementById('addProductForm');
+        const productList = document.getElementById('productList');
+
+        // Обработчик входа
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const enteredCode = adminCodeInput.value.trim();
+            if (enteredCode === ADMIN_CODE) {
+                loginForm.classList.add('hidden');
+                addProductSection.classList.remove('hidden');
+                loadProducts();
             } else {
-                alert('Неверный код доступа!');
-            }
-        };
-
-        // Добавление товара в localStorage
-        document.getElementById('formContent').addEventListener('submit', function(event) {
-            event.preventDefault(); // Отменяем стандартное поведение формы
-            
-            const productName = document.getElementById('productName').value;
-            const productPrice = document.getElementById('productPrice').value;
-            const productImage = document.getElementById('productImage').files[0];
-
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                const products = JSON.parse(localStorage.getItem('products')) || [];
-                products.push({
-                    name: productName,
-                    price: productPrice,
-                    image: reader.result // Сохраняем изображение в формате Base64
-                });
-                localStorage.setItem('products', JSON.stringify(products));
-                
-                alert('Товар добавлен успешно!');
-                document.getElementById('adminForm').reset();
-                document.getElementById('formContent').style.display = 'none';
-            };
-
-            if (productImage) {
-                reader.readAsDataURL(productImage); // Читаем изображение как Data URL
+                loginError.textContent = "Неверный код доступа!";
             }
         });
+
+        // Обработчик добавления товара
+        addProductForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('productName').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value.trim()).toFixed(2);
+            const imageFile = document.getElementById('productImage').files[0];
+
+            if (name === "" || isNaN(price) || !imageFile) {
+                alert("Пожалуйста, заполните все поля и выберите изображение.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageBase64 = e.target.result;
+
+                const products = JSON.parse(localStorage.getItem('products')) || [];
+                const newProduct = {
+                    id: Date.now(),
+                    name: name,
+                    price: price,
+                    image: imageBase64
+                };
+                products.push(newProduct);
+                localStorage.setItem('products', JSON.stringify(products));
+
+                addProductForm.reset();
+                loadProducts();
+                alert("Товар добавлен успешно!");
+            };
+            reader.readAsDataURL(imageFile);
+        });
+
+        // Функция загрузки и отображения товаров
+        function loadProducts() {
+            const products = JSON.parse(localStorage.getItem('products')) || [];
+            productList.innerHTML = "";
+
+            if (products.length === 0) {
+                productList.innerHTML = "<p>Нет добавленных товаров.</p>";
+                return;
+            }
+
+            products.forEach(product => {
+                const productDiv = document.createElement('div');
+                productDiv.classList.add('product-item');
+
+                const img = document.createElement('img');
+                img.src = product.image;
+                img.alt = product.name;
+
+                const detailsDiv = document.createElement('div');
+                detailsDiv.classList.add('product-details');
+                detailsDiv.innerHTML = `<strong>${product.name}</strong><br>Цена: ${product.price} сомони`;
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = "Удалить";
+                deleteBtn.classList.add('delete-btn');
+                deleteBtn.addEventListener('click', function() {
+                    deleteProduct(product.id);
+                });
+
+                productDiv.appendChild(img);
+                productDiv.appendChild(detailsDiv);
+                productDiv.appendChild(deleteBtn);
+
+                productList.appendChild(productDiv);
+            });
+        }
+
+        // Функция удаления товара
+        function deleteProduct(id) {
+            let products = JSON.parse(localStorage.getItem('products')) || [];
+            products = products.filter(product => product.id !== id);
+            localStorage.setItem('products', JSON.stringify(products));
+            loadProducts();
+            alert("Товар удален.");
+        }
     </script>
 </body>
 </html>
