@@ -118,3 +118,31 @@
                 alert('Пожалуйста, выберите хотя бы один товар.');
                 return;
             }
+            const customerName = document.getElementById('customer-name').value;
+            const customerAddress = document.getElementById('customer-address').value;
+            const customerPhone = document.getElementById('customer-phone').value;
+
+            // Отправка письма через EmailJS
+            const templateParams = {
+                customer_name: customerName,
+                customer_address: customerAddress,
+                customer_phone: customerPhone,
+                order: orderedProducts.join(', ')
+            };
+
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+                .then(function(response) {
+                    document.getElementById('order-message').innerText = 'Ваш заказ успешно отправлен!';
+                    document.getElementById('order-form').reset();
+                    const quantities = document.querySelectorAll('input[type="number"]');
+                    quantities.forEach(q => q.value = '0');
+                }, function(error) {
+                    document.getElementById('order-message').innerText = 'Ошибка при отправке заказа. Попробуйте позже.';
+                });
+        });
+
+        // Инициализация
+        displayProducts();
+    </script>
+</body>
+</html>
