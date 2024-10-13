@@ -2,145 +2,119 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заказ - Интересные Факты</title>
+    <title>Заказ</title>
     <style>
-        /* Общие стили */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 25%, #f6d365 50%, #fda085 75%, #b6fbff 100%);
-            background-size: 400% 400%;
-            animation: gradientBackground 20s ease infinite;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-            text-align: center;
+            font-family: Arial, sans-serif;
+            background-color: #eef;
             padding: 20px;
         }
-
-        @keyframes gradientBackground {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .product-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
-
-        header {
-            z-index: 2;
-            margin-bottom: 20px;
-        }
-
-        header h1 {
-            font-size: 3rem;
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .order-form {
-            background-color: rgba(255, 255, 255, 0.9);
-            color: #333;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
-            max-width: 500px;
-            width: 90%;
-        }
-
-        .order-form h2 {
-            margin-bottom: 20px;
-            color: #ff7e5f;
-        }
-
-        .order-form label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .order-form input, .order-form select, .order-form textarea {
-            width: 100%;
+        .product-item {
+            background: white;
             padding: 10px;
-            margin-bottom: 15px;
             border: 1px solid #ccc;
+            width: 200px;
+            text-align: center;
             border-radius: 5px;
         }
-
-        .order-form button {
-            padding: 15px 30px;
-            background-color: #6e45e2;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            border-radius: 50px;
-            transition: background-color 0.3s ease;
-            font-size: 1rem;
-            font-weight: bold;
+        .product-item img {
+            max-width: 100%;
+            height: auto;
         }
-
-        .order-form button:hover {
-            background-color: #88d3ce;
+        form {
+            margin-top: 30px;
+            max-width: 400px;
         }
-
-        /* Медиа-запросы для мобильных устройств */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .order-form {
-                padding: 20px;
-            }
+        form input, form button {
+            display: block;
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
         }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .order-form {
-                padding: 15px;
-            }
+        #order-message {
+            margin-top: 20px;
+            color: green;
         }
     </style>
+    <!-- Подключение EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("YOUR_USER_ID"); // Замените на ваш User ID из EmailJS
+       })();
+    </script>
 </head>
 <body>
-    <header>
-        <h1>Оформить заказ</h1>
-    </header>
-
-    <div class="order-form">
-        <h2>Закажите свой товар</h2>
-        <form action="https://formspree.io/f/your-form-id" method="POST">
-            <label for="name">Имя:</label>
-            <input type="text" id="name" name="name" required>
-
-            <label for="email">Электронная почта:</label>
-            <input type="email" id="email" name="_replyto" required>
-
-            <label for="product">Товар:</label>
-            <select id="product" name="product" required>
-                <option value="">Выберите товар</option>
-                <option value="Кольцо">Кольцо - 20 сомони</option>
-                <option value="Серьги">Серьги - 15 сомони</option>
-                <option value="Браслет">Браслет - 25 сомони</option>
-                <!-- Добавьте другие товары по необходимости -->
-            </select>
-
-            <label for="address">Адрес доставки:</label>
-            <textarea id="address" name="address" rows="3" required></textarea>
-
-            <button type="submit">Отправить заказ</button>
-        </form>
+    <h1>Оформить заказ</h1>
+    <div class="product-list" id="product-list">
+        <!-- Товары будут добавлены здесь -->
     </div>
-</body>
-</html>
+
+    <form id="order-form">
+        <h2>Ваши данные</h2>
+        <input type="text" id="customer-name" placeholder="Ваше имя" required>
+        <input type="text" id="customer-address" placeholder="Ваш адрес" required>
+        <input type="tel" id="customer-phone" placeholder="Номер телефона" pattern="^(\+?996|0)?\d{9}$" required>
+        <button type="submit">Отправить заказ</button>
+    </form>
+
+    <p id="order-message"></p>
+
+    <script>
+        function getProducts() {
+            const products = localStorage.getItem('products');
+            return products ? JSON.parse(products) : [];
+        }
+
+        function displayProducts() {
+            const products = getProducts();
+            const productList = document.getElementById('product-list');
+            productList.innerHTML = '';
+            products.forEach(product => {
+                const div = document.createElement('div');
+                div.className = 'product-item';
+
+                const img = document.createElement('img');
+                img.src = product.image;
+                img.alt = product.name;
+                div.appendChild(img);
+
+                const name = document.createElement('h3');
+                name.innerText = product.name;
+                div.appendChild(name);
+
+                const price = document.createElement('p');
+                price.innerText = Цена: ${product.price} сом;
+                div.appendChild(price);
+
+                const quantity = document.createElement('input');
+                quantity.type = 'number';
+                quantity.min = '0';
+                quantity.value = '0';
+                quantity.placeholder = 'Количество';
+                quantity.id = quantity-${product.id};
+                div.appendChild(quantity);
+
+                productList.appendChild(div);
+            });
+        }
+
+        document.getElementById('order-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const products = getProducts();
+            const orderedProducts = [];
+            products.forEach(product => {
+                const qty = document.getElementById(quantity-${product.id}).value;
+                if (qty > 0) {
+                    orderedProducts.push(${product.name} - ${qty} шт.);
+                }
+            });
+            if (orderedProducts.length === 0) {
+                alert('Пожалуйста, выберите хотя бы один товар.');
+                return;
+            }
