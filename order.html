@@ -2,147 +2,102 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Заказ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Страница заказа</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #eef;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
             padding: 20px;
         }
-        .product-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        .product-item {
-            background: white;
-            padding: 10px;
-            border: 1px solid #ccc;
-            width: 200px;
+        h1 {
             text-align: center;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        select,
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
             border-radius: 5px;
         }
-        .product-item img {
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        .product-image {
             max-width: 100%;
             height: auto;
         }
-        form {
-            margin-top: 30px;
-            max-width: 400px;
-        }
-        form input, form button {
-            display: block;
-            margin: 10px 0;
-            padding: 8px;
-            width: 100%;
-        }
-        #order-message {
-            margin-top: 20px;
-            color: green;
-        }
     </style>
-    <!-- Подключение EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-       (function(){
-          emailjs.init("YOUR_USER_ID"); // Замените на ваш User ID из EmailJS
-       })();
-    </script>
 </head>
 <body>
-    <h1>Оформить заказ</h1>
-    <div class="product-list" id="product-list">
-        <!-- Товары будут добавлены здесь -->
+    <div class="container">
+        <h1>Страница заказа</h1>
+        <form id="orderForm">
+            <label for="product">Выберите товар:</label>
+            <select id="product" required></select>
+            
+            <label for="address">Ваш адрес:</label>
+            <input type="text" id="address" placeholder="Введите ваш адрес" required>
+            
+            <label for="phone">Ваш номер телефона:</label>
+            <input type="text" id="phone" placeholder="Введите ваш номер телефона" required>
+            
+            <button type="button" id="whatsappOrder">Отправить заказ в WhatsApp</button>
+        </form>
     </div>
 
-    <form id="order-form">
-        <h2>Ваши данные</h2>
-        <input type="text" id="customer-name" placeholder="Ваше имя" required>
-        <input type="text" id="customer-address" placeholder="Ваш адрес" required>
-        <input type="tel" id="customer-phone" placeholder="Номер телефона" pattern="^(\+?996|0)?\d{9}$" required>
-        <button type="submit">Отправить заказ</button>
-    </form>
-
-    <p id="order-message"></p>
-
     <script>
-        function getProducts() {
-            const products = localStorage.getItem('products');
-            return products ? JSON.parse(products) : [];
-        }
+        // Загрузка товаров из localStorage и отображение в выпадающем списке
+        const products = JSON.parse(localStorage.getItem('products')) || [];
+        const productSelect = document.getElementById('product');
 
-        function displayProducts() {
-            const products = getProducts();
-            const productList = document.getElementById('product-list');
-            productList.innerHTML = '';
-            products.forEach(product => {
-                const div = document.createElement('div');
-                div.className = 'product-item';
-
-                const img = document.createElement('img');
-                img.src = product.image;
-                img.alt = product.name;
-                div.appendChild(img);
-
-                const name = document.createElement('h3');
-                name.innerText = product.name;
-                div.appendChild(name);
-
-                const price = document.createElement('p');
-                price.innerText = Цена: ${product.price} сом;
-                div.appendChild(price);
-
-                const quantity = document.createElement('input');
-                quantity.type = 'number';
-                quantity.min = '0';
-                quantity.value = '0';
-                quantity.placeholder = 'Количество';
-                quantity.id = quantity-${product.id};
-                div.appendChild(quantity);
-
-                productList.appendChild(div);
-            });
-        }
-
-        document.getElementById('order-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const products = getProducts();
-            const orderedProducts = [];
-            products.forEach(product => {
-                const qty = document.getElementById(quantity-${product.id}).value;
-                if (qty > 0) {
-                    orderedProducts.push(${product.name} - ${qty} шт.);
-                }
-            });
-            if (orderedProducts.length === 0) {
-                alert('Пожалуйста, выберите хотя бы один товар.');
-                return;
-            }
-            const customerName = document.getElementById('customer-name').value;
-            const customerAddress = document.getElementById('customer-address').value;
-            const customerPhone = document.getElementById('customer-phone').value;
-
-            // Отправка письма через EmailJS
-            const templateParams = {
-                customer_name: customerName,
-                customer_address: customerAddress,
-                customer_phone: customerPhone,
-                order: orderedProducts.join(', ')
-            };
-
-            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
-                .then(function(response) {
-                    document.getElementById('order-message').innerText = 'Ваш заказ успешно отправлен!';
-                    document.getElementById('order-form').reset();
-                    const quantities = document.querySelectorAll('input[type="number"]');
-                    quantities.forEach(q => q.value = '0');
-                }, function(error) {
-                    document.getElementById('order-message').innerText = 'Ошибка при отправке заказа. Попробуйте позже.';
-                });
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.name;
+            option.textContent = `${product.name} - ${product.price} сомони`;
+            productSelect.appendChild(option);
         });
 
-        // Инициализация
-        displayProducts();
+        document.getElementById('whatsappOrder').addEventListener('click', function() {
+            const selectedProduct = productSelect.value;
+            const selectedProductData = products.find(product => product.name === selectedProduct);
+            const selectedPrice = selectedProductData.price;
+            const address = document.getElementById('address').value;
+            const phone = document.getElementById('phone').value;
+
+            // Создаем предзаполненное сообщение
+            const message = `Я хочу заказать:\nТовар: ${selectedProduct}\nЦена: ${selectedPrice} сомони\nАдрес: ${address}\nТелефон: ${phone}`;
+            const whatsappNumber = '992928001604'; // Замените на ваш номер без +
+            const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+
+            // Перенаправляем пользователя в WhatsApp
+            window.open(url, '_blank');
+        });
     </script>
 </body>
 </html>
