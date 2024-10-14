@@ -2,268 +2,134 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Страница заказа</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #eef;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
             color: #333;
             margin: 0;
             padding: 20px;
         }
+
         .container {
-            max-width: 900px;
-            margin: auto;
+            max-width: 600px;
+            margin: 0 auto;
             background: #fff;
-            padding: 30px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-        }
-        .product-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-        .product-item {
-            background: #f9f9f9;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 220px;
-            text-align: center;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-        }
-        .product-item img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-        }
-        .product-item h3 {
-            margin: 10px 0 5px;
-            font-size: 1.2em;
-        }
-        .product-item p {
-            margin: 5px 0;
-            font-size: 1em;
-        }
-        .product-item input[type="number"] {
-            width: 60px;
-            padding: 5px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-        }
-        .order-section {
-            margin-top: 30px;
-            background: #f4f4f4;
             padding: 20px;
-            border-radius: 5px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        label {
-            display: block;
-            margin: 10px 0 5px;
-            font-weight: bold;
+
+        h1, h2 {
+            text-align: center;
         }
-        input[type="text"],
-        input[type="tel"] {
+
+        .product {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+
+        .product img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        input {
             width: 100%;
             padding: 10px;
-            margin-bottom: 15px;
+            margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #25D366;
+            padding: 10px;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s;
         }
+
         button:hover {
-            background-color: #1DA851;
+            background-color: #218838;
         }
+
         #orderMessage {
-            margin-top: 20px;
-            color: green;
             text-align: center;
-            font-weight: bold;
-        }
-        @media (max-width: 600px) {
-            .product-item {
-                width: 100%;
-            }
+            margin-top: 10px;
         }
     </style>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
+            authDomain: "my-shop-a83b9.firebaseapp.com",
+            projectId: "my-shop-a83b9",
+            storageBucket: "my-shop-a83b9.appspot.com",
+            messagingSenderId: "202845965176",
+            appId: "1:202845965176:web:e0bc43b4ac25309329168d"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            const productList = document.getElementById('productList');
+            const orderButton = document.getElementById('placeOrderButton');
+
+            // Получаем продукты из Firestore
+            const querySnapshot = await getDocs(collection(db, 'products'));
+            querySnapshot.forEach((doc) => {
+                const product = doc.data();
+                const productElement = document.createElement('div');
+                productElement.className = 'product';
+                productElement.innerHTML = `
+                    <img src="${product.imageUrl}" alt="${product.name}">
+                    <div>
+                        <h3>${product.name}</h3>
+                        <p>Цена: ${product.price} сомони</p>
+                    </div>
+                `;
+                productList.appendChild(productElement);
+            });
+
+            orderButton.addEventListener('click', () => {
+                const address = document.getElementById('customerAddress').value;
+                const phone = document.getElementById('customerPhone').value;
+
+                if (address && phone) {
+                    // Здесь вы можете интегрировать отправку сообщения на WhatsApp
+                    alert(`Заказ оформлен!\nАдрес: ${address}\nТелефон: ${phone}`);
+                    document.getElementById('orderMessage').innerText = 'Спасибо за заказ!';
+                } else {
+                    document.getElementById('orderMessage').innerText = 'Пожалуйста, заполните все поля.';
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>Оформить заказ</h1>
-
-        <div class="product-list" id="productList">
-            <!-- Товары будут добавлены здесь -->
-        </div>
-
-        <div class="order-section">
-            <h2>Ваши данные</h2>
-            <form id="orderForm">
-                <label for="customerName">Ваше имя:</label>
-                <input type="text" id="customerName" placeholder="Введите ваше имя" required>
-
-                <label for="customerAddress">Ваш адрес:</label>
-                <input type="text" id="customerAddress" placeholder="Введите ваш адрес" required>
-
-                <label for="customerPhone">Ваш номер телефона (Таджикистан):</label>
-                <input type="tel" id="customerPhone" placeholder="Например, +992123456789" pattern="^\+?992\d{9}$" required>
-
-                <button type="button" id="sendOrder">Отправить заказ через WhatsApp</button>
-            </form>
-            <p id="orderMessage"></p>
-        </div>
+        <h1>Доступные товары</h1>
+        <div id="productList"></div>
+        <h2>Оформление заказа</h2>
+        <input type="text" id="customerAddress" placeholder="Ваш адрес">
+        <input type="tel" id="customerPhone" placeholder="Номер телефона">
+        <button id="placeOrderButton">Оформить заказ</button>
+        <div id="orderMessage"></div>
     </div>
-
-    <script>
-        // Ваша конфигурация Firebase
-        var firebaseConfig = {
-            apiKey: "AIzaSyDWcARyL4QqA_ofcYgBeEkXxvxOqFmg2hQ",
-            authDomain: "project-2f57a.firebaseapp.com",
-            projectId: "project-2f57a",
-            storageBucket: "project-2f57a.appspot.com",
-            messagingSenderId: "3707441883",
-            appId: "1:3707441883:web:384973fc7497f30f9f32fe",
-            measurementId: "G-E9655ZHG3Z"
-        };
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
-
-        const productListDiv = document.getElementById('productList');
-        const sendOrderBtn = document.getElementById('sendOrder');
-        const orderMessage = document.getElementById('orderMessage');
-
-        // Функция для загрузки товаров из Firestore
-        function loadProducts() {
-            db.collection('products').get()
-                .then((querySnapshot) => {
-                    if (querySnapshot.empty) {
-                        productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
-                        return;
-                    }
-                    querySnapshot.forEach((doc) => {
-                        const product = doc.data();
-                        displayProduct(product);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Ошибка при получении товаров: ", error);
-                    productListDiv.innerHTML = "<p>Ошибка при загрузке товаров.</p>";
-                });
-        }
-
-        // Функция для отображения товара на странице
-        function displayProduct(product) {
-            const productDiv = document.createElement('div');
-            productDiv.classList.add('product-item');
-
-            const img = document.createElement('img');
-            img.src = product.imageURL; // URL изображения из Firestore
-            img.alt = product.name;
-
-            const name = document.createElement('h3');
-            name.textContent = product.name;
-
-            const price = document.createElement('p');
-            price.textContent = `Цена: ${product.price} сомони`;
-
-            const quantityInput = document.createElement('input');
-            quantityInput.type = 'number';
-            quantityInput.min = '0';
-            quantityInput.value = '0';
-            quantityInput.id = `quantity-${product.id}`;
-            quantityInput.placeholder = 'Кол-во';
-
-            productDiv.appendChild(img);
-            productDiv.appendChild(name);
-            productDiv.appendChild(price);
-            productDiv.appendChild(quantityInput);
-
-            productListDiv.appendChild(productDiv);
-        }
-
-        // Загрузка товаров при загрузке страницы
-        window.onload = loadProducts;
-
-        // Обработчик отправки заказа через WhatsApp
-        sendOrderBtn.addEventListener('click', function() {
-            const customerName = document.getElementById('customerName').value.trim();
-            const customerAddress = document.getElementById('customerAddress').value.trim();
-            const customerPhone = document.getElementById('customerPhone').value.trim();
-
-            if (customerName === "" || customerAddress === "" || customerPhone === "") {
-                alert("Пожалуйста, заполните все поля.");
-                return;
-            }
-
-            // Проверка формата номера телефона
-            const phonePattern = /^\+?992\d{9}$/;
-            if (!phonePattern.test(customerPhone)) {
-                alert("Пожалуйста, введите корректный номер телефона (например, +992123456789).");
-                return;
-            }
-
-            // Сбор информации о заказанных товарах
-            const orderedProducts = [];
-            const products = []; // Для хранения данных о продуктах
-
-            // Получение всех товаров из Firestore
-            db.collection('products').get()
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        const product = doc.data();
-                        const qty = parseInt(document.getElementById(`quantity-${doc.id}`).value);
-                        if (qty > 0) {
-                            orderedProducts.push(`${product.name} - ${qty} шт.`);
-                        }
-                    });
-
-                    if (orderedProducts.length === 0) {
-                        alert("Пожалуйста, выберите хотя бы один товар.");
-                        return;
-                    }
-
-                    const message = `📦 *Новый заказ*\n\n*Имя:* ${customerName}\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
-
-                    const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
-                    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
-                    // Открытие WhatsApp с предзаполненным сообщением
-                    window.open(url, '_blank');
-
-                    // Вывод сообщения об успешной отправке
-                    orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
-                    document.getElementById('orderForm').reset();
-
-                    // Сброс количеств товаров
-                    const quantityInputs = document.querySelectorAll('input[type="number"]');
-                    quantityInputs.forEach(input => input.value = '0');
-                })
-                .catch((error) => {
-                    console.error("Ошибка при получении товаров: ", error);
-                    alert("Произошла ошибка при обработке вашего заказа. Попробуйте позже.");
-                });
-        });
-    </script>
 </body>
-    </html>
+</html>
