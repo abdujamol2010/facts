@@ -1,302 +1,165 @@
+Абдучамол:
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Админ-панель</title>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: url('https://via.placeholder.com/1500x1000') no-repeat center center fixed;
-            background-size: cover;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
             color: #333;
             margin: 0;
-            padding: 0;
-        }
-        .overlay {
-            background: rgba(255, 255, 255, 0.9);
-            min-height: 100vh;
             padding: 20px;
         }
+
         .container {
-            max-width: 800px;
-            margin: 20px auto;
-            background: #f9f9f9;
-            padding: 30px;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            position: relative;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .logo {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #ff7e5f;
-        }
+
         h1, h2 {
             text-align: center;
-            color: #ff7e5f;
         }
-        input[type="text"], input[type="number"], input[type="file"] {
+
+        input[type="text"], input[type="url"], input[type="file"] {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #ff7e5f;
+            padding: 10px;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
         }
+
         button:hover {
-            background-color: #feb47b;
+            background-color: #218838;
         }
+
         #message {
             text-align: center;
             margin-top: 10px;
             color: green;
-            font-weight: bold;
         }
+
         .product-list {
-            margin-top: 30px;
+            margin-top: 20px;
         }
+
         .product-item {
-            display: flex;
-            align-items: center;
-            background: #fff;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .product-item img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 5px;
-            margin-right: 20px;
-        }
-        .product-details {
-            flex-grow: 1;
-        }
-        .delete-btn {
-            background-color: #d9534f;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .delete-btn:hover {
-            background-color: #c9302c;
-        }
-        /* Ручка FAYZ+ внизу страницы */
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #999;
-            font-size: 14px;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
         }
     </style>
-</head>
-<body>
-    <div class="overlay">
-        <div class="container">
-            <div class="logo">FAYZ+</div>
-            <h1>Админ-панель</h1>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-storage.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-messaging.js";
 
-            <!-- Форма входа -->
-            <form id="loginForm">
-                <input type="password" id="adminCode" placeholder="Введите код доступа (FAYZ+)" required>
-                <button type="submit">Войти</button>
-                <p id="loginError" style="color:red;"></p>
-            </form>
-
-            <!-- Форма добавления товара (скрыта по умолчанию) -->
-            <div id="addProductSection" style="display:none;">
-                <h2>Добавить товар</h2>
-                <input type="text" id="productName" placeholder="Название товара" required>
-                <input type="number" id="productPrice" placeholder="Цена товара (сомони)" min="0" step="0.01" required>
-                <input type="file" id="productImage" accept="image/*" required>
-                <button id="addProductButton">Добавить товар</button>
-                <div id="message"></div>
-
-                <h2>Список товаров</h2>
-                <div id="productList" class="product-list">
-                    <!-- Добавленные товары будут отображаться здесь -->
-                </div>
-            </div>
-
-            <div class="footer">
-                © 2024 FAYZ+. Все права защищены.
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Ваш Firebase-конфигурационный объект
         const firebaseConfig = {
-            apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
-            authDomain: "my-shop-a83b9.firebaseapp.com",
-            projectId: "my-shop-a83b9",
-            storageBucket: "my-shop-a83b9.appspot.com",
-            messagingSenderId: "202845965176",
-            appId: "1:202845965176:web:e0bc43b4ac25309329168d"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
         };
 
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const messaging = getMessaging(app);
 
-        // Коды доступа
-        const ADMIN_CODE = "FAYZ+";
-
-        // Элементы страницы
-        const loginForm = document.getElementById('loginForm');
-        const adminCodeInput = document.getElementById('adminCode');
-        const loginError = document.getElementById('loginError');
-        const addProductSection = document.getElementById('addProductSection');
-        const addProductButton = document.getElementById('addProductButton');
-        const productList = document.getElementById('productList');
-        const message = document.getElementById('message');
-
-        // Обработчик формы входа
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const enteredCode = adminCodeInput.value.trim();
-            if (enteredCode === ADMIN_CODE) {
-                loginForm.style.display = 'none';
-                addProductSection.style.display = 'block';
-                loadProducts();
+        Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+                getToken(messaging, { vapidKey: "YOUR_VAPID_KEY" }).then((currentToken) => {
+                    if (currentToken) {
+                        console.log("FCM Token:", currentToken);
+                    } else {
+                        console.log("No registration token available. Request permission to generate one.");
+                    }
+                }).catch((err) => {
+                    console.log("An error occurred while retrieving token. ", err);
+                });
             } else {
-                loginError.textContent = "Неверный код доступа!";
+                console.log("Unable to get permission to notify.");
             }
         });
 
-        // Функция загрузки товаров из Firestore
-        function loadProducts() {
-            db.collection('products').get()
-                .then((querySnapshot) => {
-                    productList.innerHTML = '';
-                    if (querySnapshot.empty) {
-                        productList.innerHTML = "<p>Нет добавленных товаров.</p>";
-                        return;
+        document.addEventListener('DOMContentLoaded', function () {
+            const addProductButton = document.getElementById('addProductButton');
+            const productList = document.getElementById('productList');
+
+            addProductButton.addEventListener('click', async () => {
+                const productName = document.getElementById('productName').value;
+                const productPrice = document.getElementById('productPrice').value;
+                const productImageFile = document.getElementById('productImage').files[0];
+
+                if (productName && productPrice && productImageFile) {
+                    try {
+                        const imageRef = ref(storage, 'images/' + productImageFile.name);
+                        await uploadBytes(imageRef, productImageFile);
+
+const imageUrl = await getDownloadURL(imageRef);
+
+                        await addDoc(collection(db, 'products'), {
+                            name: productName,
+                            price: parseFloat(productPrice),
+                            imageUrl: imageUrl
+                        });
+                        document.getElementById('message').innerText = 'Товар успешно добавлен!';
+                        document.getElementById('productName').value = '';
+                        document.getElementById('productPrice').value = '';
+                        document.getElementById('productImage').value = '';
+                    } catch (error) {
+                        console.error("Ошибка добавления документа: ", error);
+                        document.getElementById('message').innerText = 'Ошибка добавления товара.';
                     }
-                    querySnapshot.forEach((doc) => {
-                        const product = doc.data();
-                        displayProduct(doc.id, product);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Ошибка при получении товаров: ", error);
-                    productList.innerHTML = "<p>Ошибка при загрузке товаров.</p>";
-                });
-        }
-
-        // Функция отображения товара на странице
-        function displayProduct(id, product) {
-            const productDiv = document.createElement('div');
-            productDiv.classList.add('product-item');
-
-            const img = document.createElement('img');
-            img.src = product.imageUrl;
-            img.alt = product.name;
-
-            const detailsDiv = document.createElement('div');
-            detailsDiv.classList.add('product-details');
-            detailsDiv.innerHTML = `<strong>${product.name}</strong><br>Цена: ${product.price} сомони`;
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = "Удалить";
-            deleteBtn.classList.add('delete-btn');
-            deleteBtn.addEventListener('click', function() {
-                deleteProduct(id, product.imageUrl);
+                } else {
+                    document.getElementById('message').innerText = 'Пожалуйста, заполните все поля.';
+                }
             });
 
-            productDiv.appendChild(img);
-            productDiv.appendChild(detailsDiv);
-            productDiv.appendChild(deleteBtn);
-
-            productList.appendChild(productDiv);
-        }
-
-        // Функция удаления товара
-        function deleteProduct(id, imageUrl) {
-            if (!confirm("Вы уверены, что хотите удалить этот товар?")) return;
-
-            // Удаление изображения из Storage
-            const storageRef = storage.refFromURL(imageUrl);
-            storageRef.delete().then(() => {
-                // Удаление документа из Firestore
-                db.collection('products').doc(id).delete()
-                    .then(() => {
-                        alert("Товар удален.");
-                        loadProducts();
-                    })
-                    .catch((error) => {
-                        console.error("Ошибка при удалении товара: ", error);
-                        alert("Произошла ошибка при удалении товара.");
-                    });
-            }).catch((error) => {
-                console.error("Ошибка при удалении изображения: ", error);
-                alert("Произошла ошибка при удалении изображения.");
-            });
-        }
-
-        // Обработчик добавления товара
-        addProductButton.addEventListener('click', async () => {
-            const name = document.getElementById('productName').value.trim();
-            const price = document.getElementById('productPrice').value.trim();
-            const imageFile = document.getElementById('productImage').files[0];
-
-            if (name === "" || price === "" || !imageFile) {
-                message.style.color = 'red';
-                message.textContent = "Пожалуйста, заполните все поля и выберите изображение.";
-                return;
-            }
-
-            try {
-                // Создание ссылки для хранения изображения
-                const imageRef = storage.ref().child(`product_images/${Date.now()}_${imageFile.name}`);
-
-                // Загрузка изображения в Firebase Storage
-                await imageRef.put(imageFile);
-
-                // Получение URL загруженного изображения
-                const imageUrl = await imageRef.getDownloadURL();
-
-                // Добавление товара в Firestore
-                await db.collection('products').add({
-                    name: name,
-                    price: parseFloat(price),
-                    imageUrl: imageUrl
+            onSnapshot(collection(db, 'products'), (snapshot) => {
+                productList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const product = doc.data();
+                    const productItem = document.createElement('div');
+                    productItem.classList.add('product-item');
+                    productItem.innerHTML = `
+                        <h3>${product.name}</h3>
+                        <p>Цена: ${product.price}</p>
+                        <img src="${product.imageUrl}" alt="${product.name}" style="max-width: 100%; height: auto;">
+                    `;
+                    productList.appendChild(productItem);
                 });
-
-                // Очистка формы и обновление списка товаров
-                document.getElementById('productName').value = '';
-                document.getElementById('productPrice').value = '';
-                document.getElementById('productImage').value = '';
-                message.style.color = 'green';
-                message.textContent = "Товар добавлен успешно!";
-                loadProducts();
-            } catch (error) {
-                console.error("Ошибка при добавлении товара: ", error);
-                message.style.color = 'red';
-                message.textContent = "Произошла ошибка при добавлении товара.";
-            }
+            });
         });
     </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Добавить товар</h1>
+        <input type="text" id="productName" placeholder="Название товара">
+        <input type="text" id="productPrice" placeholder="Цена товара">
+        <input type="file" id="productImage" accept="image/*">
+        <button id="addProductButton">Добавить товар</button>
+        <div id="message"></div>
+        <div class="product-list" id="productList"></div>
+    </div>
 </body>
-                </html>
+</html>
