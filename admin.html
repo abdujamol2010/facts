@@ -53,11 +53,21 @@
             margin-top: 10px;
             color: green;
         }
+
+        .product-list {
+            margin-top: 20px;
+        }
+
+        .product-item {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
     </style>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-storage.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-messaging.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
@@ -71,25 +81,40 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
+        const messaging = getMessaging(app);
+
+        Notification.requestPermission().then((permission) => {
+            if (permission === "granted") {
+                getToken(messaging, { vapidKey: "YOUR_VAPID_KEY" }).then((currentToken) => {
+                    if (currentToken) {
+                        console.log("FCM Token:", currentToken);
+                    } else {
+                        console.log("No registration token available. Request permission to generate one.");
+                    }
+                }).catch((err) => {
+                    console.log("An error occurred while retrieving token. ", err);
+                });
+            } else {
+                console.log("Unable to get permission to notify.");
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function () {
             const addProductButton = document.getElementById('addProductButton');
+            const productList = document.getElementById('productList');
 
             addProductButton.addEventListener('click', async () => {
                 const productName = document.getElementById('productName').value;
                 const productPrice = document.getElementById('productPrice').value;
                 const productImageFile = document.getElementById('productImage').files[0];
 
-                if (productName && productPrice && productImageFile) {
+if (productName && productPrice && productImageFile) {
                     try {
-                        // Загружаем изображение в Firebase Storage
                         const imageRef = ref(storage, 'images/' + productImageFile.name);
                         await uploadBytes(imageRef, productImageFile);
 
-                        // Получаем URL загруженного изображения
                         const imageUrl = await getDownloadURL(imageRef);
 
-                        // Сохраняем данные товара в Firestore
                         await addDoc(collection(db, 'products'), {
                             name: productName,
                             price: parseFloat(productPrice),
@@ -107,6 +132,21 @@
                     document.getElementById('message').innerText = 'Пожалуйста, заполните все поля.';
                 }
             });
+
+            onSnapshot(collection(db, 'products'), (snapshot) => {
+                productList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const product = doc.data();
+                    const productItem = document.createElement('div');
+                    productItem.classList.add('product-item');
+                    productItem.innerHTML = `
+                        <h3>${product.name}</h3>
+                        <p>Цена: ${product.price}</p>
+                        <img src="${product.imageUrl}" alt="${product.name}" style="max-width: 100%; height: auto;">
+                    `;
+                    productList.appendChild(productItem);
+                });
+            });
         });
     </script>
 </head>
@@ -118,6 +158,7 @@
         <input type="file" id="productImage" accept="image/*">
         <button id="addProductButton">Добавить товар</button>
         <div id="message"></div>
+        <div class="product-list" id="productList"></div>
     </div>
 </body>
 </html>
