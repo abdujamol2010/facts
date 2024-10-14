@@ -2,8 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Страница заказа</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,12 +16,12 @@
             padding: 20px;
         }
         .container {
-            max-width: 700px;
+            max-width: 800px;
             margin: auto;
             background: #fff;
-            padding: 20px;
+            padding: 30px;
             border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         h1 {
             text-align: center;
@@ -110,49 +113,80 @@
     </div>
 
     <script>
+        // Ваша конфигурация Firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyDWcARyL4QqA_ofcYgBeEkXxvxOqFmg2hQ",
+            authDomain: "project-2f57a.firebaseapp.com",
+            projectId: "project-2f57a",
+            storageBucket: "project-2f57a.appspot.com",
+            messagingSenderId: "3707441883",
+            appId: "1:3707441883:web:384973fc7497f30f9f32fe",
+            measurementId: "G-E9655ZHG3Z"
+        };
+        // Инициализация Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
         const productListDiv = document.getElementById('productList');
         const sendOrderBtn = document.getElementById('sendOrder');
         const orderMessage = document.getElementById('orderMessage');
 
-        // Загрузка товаров из localStorage и отображение на странице
-        const products = JSON.parse(localStorage.getItem('products')) || [];
-
-        if (products.length === 0) {
-            productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
-        } else {
-            products.forEach(product => {
-                const productDiv = document.createElement('div');
-                productDiv.classList.add('product-item');
-
-                const img = document.createElement('img');
-                img.src = product.image;
-                img.alt = product.name;
-
-                const name = document.createElement('h3');
-                name.textContent = product.name;
-
-                const price = document.createElement('p');
-                price.textContent = `Цена: ${product.price} сомони`;
-
-                const quantityLabel = document.createElement('label');
-                quantityLabel.textContent = "Количество:";
-                quantityLabel.setAttribute('for', `quantity-${product.id}`);
-
-                const quantityInput = document.createElement('input');
-                quantityInput.type = 'number';
-                quantityInput.id = `quantity-${product.id}`;
-                quantityInput.min = '0';
-                quantityInput.value = '0';
-
-                productDiv.appendChild(img);
-                productDiv.appendChild(name);
-                productDiv.appendChild(price);
-                productDiv.appendChild(quantityLabel);
-                productDiv.appendChild(quantityInput);
-
-                productListDiv.appendChild(productDiv);
-            });
+        // Функция для загрузки товаров из Firestore
+        function loadProducts() {
+            db.collection('products').get()
+                .then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
+                        return;
+                    }
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        displayProduct(product);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Ошибка при получении товаров: ", error);
+                    productListDiv.innerHTML = "<p>Ошибка при загрузке товаров.</p>";
+                });
         }
+
+        // Функция для отображения товара на странице
+        function displayProduct(product) {
+            const productDiv = document.createElement('div');
+            productDiv.classList.add('product-item');
+
+            const img = document.createElement('img');
+            img.src = product.imageURL;
+            img.alt = product.name;
+
+            const name = document.createElement('h3');
+            name.textContent = product.name;
+
+            const price = document.createElement('p');
+            price.textContent = `Цена: ${product.price} сомони`;
+
+            const quantityLabel = document.createElement('label');
+            quantityLabel.textContent = "Количество:";
+            quantityLabel.setAttribute('for', `quantity-${product.id}`);
+
+            const quantityInput = document.createElement('input');
+            quantityInput.type = 'number';
+            quantityInput.id = `quantity-${product.id}`;
+            quantityInput.min = '0';
+            quantityInput.value = '0';
+
+            productDiv.appendChild(img);
+            productDiv.appendChild(name);
+            productDiv.appendChild(price);
+            productDiv.appendChild(quantityLabel);
+            productDiv.appendChild(quantityInput);
+
+            productListDiv.appendChild(productDiv);
+        }
+
+        // Загрузка товаров при загрузке страницы
+        window.onload = loadProducts;
 
         // Обработчик отправки заказа через WhatsApp
         sendOrderBtn.addEventListener('click', function() {
@@ -174,58 +208,38 @@
 
             // Сбор информации о заказанных товарах
             const orderedProducts = [];
-            products.forEach(product => {
-                const qty = parseInt(document.getElementById(`quantity-${product.id}`).value);
-                if (qty > 0) {
-                    orderedProducts.push(`${product.name} - ${qty} шт.`);
-                }
-            });
+            db.collection('products').get()
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        const qty = parseInt(document.getElementById(`quantity-${product.id}`).value);
+                        if (qty > 0) {
+                            orderedProducts.push(`${product.name} - ${qty} шт.`);
+                        }
+                    });
 
-            if (orderedProducts.length === 0) {
-                alert("Пожалуйста, выберите хотя бы один товар.");
-                return;
-            }
+                    if (orderedProducts.length === 0) {
+                        alert("Пожалуйста, выберите хотя бы один товар.");
+                        return;
+                    }
 
-            const message = `📦 *Новый заказ*\n\n*Имя:* ${customerName}\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
+                    const message = `📦 *Новый заказ*\n\n*Имя:* ${customerName}\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
 
-            const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
-            const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+                    const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
+                    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
 
-            // Открытие WhatsApp с предзаполненным сообщением
-            window.open(url, '_blank');
+                    // Открытие WhatsApp с предзаполненным сообщением
+                    window.open(url, '_blank');
 
-            // Вывод сообщения об успешной отправке
-            orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
-            document.getElementById('orderForm').reset();
-
-            // Сброс количеств товаров
-            products.forEach(product => {
-                document.getElementById(`quantity-${product.id}`).value = '0';
-            });
+                    // Вывод сообщения об успешной отправке
+                    orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
+                    document.getElementById('orderForm').reset();
+                })
+                .catch((error) => {
+                    console.error("Ошибка при получении товаров: ", error);
+                    alert("Произошла ошибка при обработке вашего заказа. Попробуйте позже.");
+                });
         });
     </script>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDWcARyL4QqA_ofcYgBeEkXxvxOqFmg2hQ",
-    authDomain: "project-2f57a.firebaseapp.com",
-    projectId: "project-2f57a",
-    storageBucket: "project-2f57a.appspot.com",
-    messagingSenderId: "3707441883",
-    appId: "1:3707441883:web:384973fc7497f30f9f32fe",
-    measurementId: "G-E9655ZHG3Z"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
 </body>
 </html>
