@@ -1,8 +1,9 @@
+×∆∆×:
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Страница заказа</title>
+    <title>Страница администратора</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -10,7 +11,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #eef;
+            background-color: #f4f4f4;
             color: #333;
             margin: 0;
             padding: 20px;
@@ -23,43 +24,14 @@
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        h1 {
+        h1, h2 {
             text-align: center;
-        }
-        .product-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-        .product-item {
-            background: #f9f9f9;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 200px;
-            text-align: center;
-        }
-        .product-item img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 5px;
-        }
-        .product-item h3 {
-            margin: 10px 0 5px;
-        }
-        .product-item p {
-            margin: 5px 0;
-        }
-        .order-section {
-            margin-top: 30px;
         }
         label {
             display: block;
             margin: 10px 0 5px;
         }
-        input[type="text"],
-        input[type="number"] {
+        input, button {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -67,56 +39,90 @@
             border-radius: 5px;
         }
         button {
-            width: 100%;
-            padding: 10px;
-            background-color: #25D366;
+            background-color: #5cb85c;
             color: white;
             border: none;
-            border-radius: 5px;
             cursor: pointer;
-            font-size: 1em;
         }
         button:hover {
-            background-color: #1DA851;
+            background-color: #4cae4c;
         }
-        #orderMessage {
+        .hidden {
+            display: none;
+        }
+        .product-list {
             margin-top: 20px;
-            color: green;
-            text-align: center;
+        }
+        .product-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .product-item img {
+            max-width: 100px;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+        .product-details {
+            flex-grow: 1;
+        }
+        .delete-btn {
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c9302c;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Оформить заказ</h1>
+        <h1>Админ-панель</h1>
 
-        <div class="product-list" id="productList">
-            <!-- Товары будут добавлены здесь -->
-        </div>
+        <!-- Форма входа -->
+        <form id="loginForm">
+            <label for="adminCode">Введите код для доступа:</label>
+            <input type="password" id="adminCode" placeholder="Код доступа" required>
+            <button type="submit">Войти</button>
+            <p id="loginError" style="color:red;"></p>
+        </form>
 
-        <div class="order-section">
-            <h2>Ваши данные</h2>
-            <form id="orderForm">
-                <label for="customerName">Ваше имя:</label>
-                <input type="text" id="customerName" placeholder="Введите ваше имя" required>
+        <!-- Форма добавления товара (скрыта по умолчанию) -->
+        <div id="addProductSection" class="hidden">
+            <h2>Добавить товар</h2>
+            <form id="addProductForm">
+                <label for="productName">Название товара:</label>
+                <input type="text" id="productName" placeholder="Введите название товара" required>
                 
-                <label for="customerAddress">Ваш адрес:</label>
-                <input type="text" id="customerAddress" placeholder="Введите ваш адрес" required>
+                <label for="productPrice">Цена товара (сомони):</label>
+                <input type="number" id="productPrice" placeholder="Введите цену товара" min="0" step="0.01" required>
                 
-                <label for="customerPhone">Ваш номер телефона (Таджикистан):</label>
-                <input type="text" id="customerPhone" placeholder="Например, +992123456789" pattern="^\+?992\d{9}$" required>
+                <label for="productImage">Изображение товара:</label>
+                <input type="file" id="productImage" accept="image/*" required>
                 
-                <button type="button" id="sendOrder">Отправить заказ через WhatsApp</button>
+                <button type="submit">Добавить товар</button>
             </form>
-            <p id="orderMessage"></p>
+
+            <h2>Список товаров</h2>
+            <div id="productList" class="product-list">
+                <!-- Здесь будут отображаться добавленные товары -->
+            </div>
         </div>
     </div>
 
     <script>
-        // Ваша конфигурация Firebase
+        // Ваши конфигурационные данные Firebase
         var firebaseConfig = {
             apiKey: "AIzaSyDWcARyL4QqA_ofcYgBeEkXxvxOqFmg2hQ",
-            authDomain: "project-2f57a.firebaseapp.com",
+
+authDomain: "project-2f57a.firebaseapp.com",
             projectId: "project-2f57a",
             storageBucket: "project-2f57a.appspot.com",
             messagingSenderId: "3707441883",
@@ -128,118 +134,154 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        const productListDiv = document.getElementById('productList');
-        const sendOrderBtn = document.getElementById('sendOrder');
-        const orderMessage = document.getElementById('orderMessage');
+        const ADMIN_CODE = "FAYS+";
 
-        // Функция для загрузки товаров из Firestore
-        function loadProducts() {
-            db.collection('products').get()
-                .then((querySnapshot) => {
-                    if (querySnapshot.empty) {
-                        productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
-                        return;
-                    }
-                    querySnapshot.forEach((doc) => {
-                        const product = doc.data();
-                        displayProduct(product);
-                    });
-                })
-                .catch((error) => {
-                    console.error("Ошибка при получении товаров: ", error);
-                    productListDiv.innerHTML = "<p>Ошибка при загрузке товаров.</p>";
-                });
-        }
+        // Получение элементов
+        const loginForm = document.getElementById('loginForm');
+        const adminCodeInput = document.getElementById('adminCode');
+        const loginError = document.getElementById('loginError');
+        const addProductSection = document.getElementById('addProductSection');
+        const addProductForm = document.getElementById('addProductForm');
+        const productList = document.getElementById('productList');
 
-        // Функция для отображения товара на странице
-        function displayProduct(product) {
-            const productDiv = document.createElement('div');
-            productDiv.classList.add('product-item');
-
-            const img = document.createElement('img');
-            img.src = product.imageURL;
-            img.alt = product.name;
-
-            const name = document.createElement('h3');
-            name.textContent = product.name;
-
-            const price = document.createElement('p');
-            price.textContent = `Цена: ${product.price} сомони`;
-
-            const quantityLabel = document.createElement('label');
-            quantityLabel.textContent = "Количество:";
-            quantityLabel.setAttribute('for', `quantity-${product.id}`);
-
-            const quantityInput = document.createElement('input');
-            quantityInput.type = 'number';
-            quantityInput.id = `quantity-${product.id}`;
-            quantityInput.min = '0';
-            quantityInput.value = '0';
-
-            productDiv.appendChild(img);
-            productDiv.appendChild(name);
-            productDiv.appendChild(price);
-            productDiv.appendChild(quantityLabel);
-            productDiv.appendChild(quantityInput);
-
-            productListDiv.appendChild(productDiv);
-        }
-
-        // Загрузка товаров при загрузке страницы
-        window.onload = loadProducts;
-
-        // Обработчик отправки заказа через WhatsApp
-        sendOrderBtn.addEventListener('click', function() {
-            const customerName = document.getElementById('customerName').value.trim();
-            const customerAddress = document.getElementById('customerAddress').value.trim();
-            const customerPhone = document.getElementById('customerPhone').value.trim();
-
-            if (customerName === "" || customerAddress === "" || customerPhone === "") {
-                alert("Пожалуйста, заполните все поля.");
-                return;
+        // Обработчик входа
+        loginForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const enteredCode = adminCodeInput.value.trim();
+            if (enteredCode === ADMIN_CODE) {
+                loginForm.classList.add('hidden');
+                addProductSection.classList.remove('hidden');
+                loadProducts();
+            } else {
+                loginError.textContent = "Неверный код доступа!";
             }
-
-            // Проверка формата номера телефона
-            const phonePattern = /^\+?992\d{9}$/;
-            if (!phonePattern.test(customerPhone)) {
-                alert("Пожалуйста, введите корректный номер телефона (например, +992123456789).");
-                return;
-            }
-
-            // Сбор информации о заказанных товарах
-            const orderedProducts = [];
-            db.collection('products').get()
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        const product = doc.data();
-                        const qty = parseInt(document.getElementById(`quantity-${product.id}`).value);
-                        if (qty > 0) {
-                            orderedProducts.push(`${product.name} - ${qty} шт.`);
-                        }
-                    });
-
-                    if (orderedProducts.length === 0) {
-                        alert("Пожалуйста, выберите хотя бы один товар.");
-                        return;
-                    }
-
-                    const message = `📦 *Новый заказ*\n\n*Имя:* ${customerName}\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
-
-                    const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
-                    const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
-                    // Открытие WhatsApp с предзаполненным сообщением
-                    window.open(url, '_blank');
-
-                    // Вывод сообщения об успешной отправке
-                    orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
-                    document.getElementById('orderForm').reset();
-                })
-                .catch((error) => {
-                    console.error("Ошибка при получении товаров: ", error);
-                    alert("Произошла ошибка при обработке вашего заказа. Попробуйте позже.");
-                });
         });
+
+        // Обработчик добавления товара
+        addProductForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('productName').value.trim();
+            const price = parseFloat(document.getElementById('productPrice').value.trim()).toFixed(2);
+            const imageFile = document.getElementById('productImage').files[0];
+
+            if (name === ""  isNaN(price)  !imageFile) {
+                alert("Пожалуйста, заполните все поля и выберите изображение.");
+                return;
+            }
+
+            // Загрузка изображения в Firebase Storage
+            const storageRef = storage.ref();
+            const imageRef = storageRef.child(products/${Date.now()}_${imageFile.name});
+            const uploadTask = imageRef.put(imageFile);
+
+            uploadTask.on('state_changed', 
+                function(snapshot) {
+                    // Можно добавить индикатор загрузки здесь
+                }, 
+                function(error) {
+                    console.error("Ошибка загрузки изображения:", error);
+                    alert("Ошибка загрузки изображения. Попробуйте снова.");
+                }, 
+                function() {
+                    // Получение URL загруженного изображения
+                    uploadTask.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+                        // Добавление товара в Firestore
+                        db.collection("products").add({
+                            name: name,
+                            price: price,
+                            imageUrl: downloadURL
+                        })
+                        .then(function(docRef) {
+                            alert("Товар добавлен успешно!");
+                            addProductForm.reset();
+                            loadProducts();
+                        })
+                        .catch(function(error) {
+                            console.error("Ошибка добавления товара:", error);
+                            alert("Ошибка добавления товара. Попробуйте снова.");
+                        });
+                    });
+                }
+            );
+        });
+
+        // Функция загрузки и отображения товаров
+        function loadProducts() {
+            productList.innerHTML = "";
+
+            db.collection("products").get()
+
+.then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        productList.innerHTML = "<p>Нет добавленных товаров.</p>";
+                        return;
+                    }
+                    querySnapshot.forEach((doc) => {
+                        const product = doc.data();
+                        const productDiv = document.createElement('div');
+                        productDiv.classList.add('product-item');
+
+                        const img = document.createElement('img');
+                        img.src = product.imageUrl;
+                        img.alt = product.name;
+
+                        const detailsDiv = document.createElement('div');
+                        detailsDiv.classList.add('product-details');
+                        detailsDiv.innerHTML = <strong>${product.name}</strong><br>Цена: ${product.price} сомони;
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = "Удалить";
+                        deleteBtn.classList.add('delete-btn');
+                        deleteBtn.addEventListener('click', function() {
+                            deleteProduct(doc.id, product.imageUrl);
+                        });
+
+                        productDiv.appendChild(img);
+                        productDiv.appendChild(detailsDiv);
+                        productDiv.appendChild(deleteBtn);
+
+                        productList.appendChild(productDiv);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Ошибка получения товаров:", error);
+                    productList.innerHTML = "<p>Ошибка загрузки товаров. Попробуйте снова.</p>";
+                });
+        }
+
+        // Функция удаления товара
+        function deleteProduct(docId, imageUrl) {
+            if (confirm("Вы уверены, что хотите удалить этот товар?")) {
+                // Удаление из Firestore
+                db.collection("products").doc(docId).delete()
+                    .then(() => {
+                        // Удаление изображения из Storage
+                        const storageRef = storage.refFromURL(imageUrl);
+                        storageRef.delete()
+                            .then(() => {
+                                alert("Товар удален успешно.");
+                                loadProducts();
+                            })
+                            .catch((error) => {
+                                console.error("Ошибка удаления изображения:", error);
+                                alert("Товар удален, но возникла ошибка при удалении изображения.");
+                                loadProducts();
+                            });
+                    })
+                    .catch((error) => {
+                        console.error("Ошибка удаления товара:", error);
+                        alert("Ошибка удаления товара. Попробуйте снова.");
+                    });
+            }
+        }
+
+        // Загрузка товаров при загрузке страницы, если админ уже вошел
+        window.onload = function() {
+            if (addProductSection.classList.contains('hidden') === false) {
+                loadProducts();
+            }
+        }
     </script>
 </body>
 </html>
