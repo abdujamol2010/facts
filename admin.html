@@ -3,244 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Страница администратора</title>
+    <title>Admin Page</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
             color: #333;
             margin: 0;
             padding: 20px;
         }
+
         .container {
             max-width: 600px;
-            margin: auto;
+            margin: 0 auto;
             background: #fff;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        h1 {
+
+        h1, h2 {
             text-align: center;
         }
-        label {
-            display: block;
-            margin: 10px 0 5px;
-        }
-        input[type="text"],
-        input[type="number"],
-        input[type="file"] {
+
+        input {
             width: 100%;
             padding: 10px;
-            margin-bottom: 10px;
+            margin: 10px 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+
         button {
             width: 100%;
             padding: 10px;
-            background-color: #5cb85c;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-bottom: 10px;
         }
+
         button:hover {
-            background-color: #4cae4c;
+            background-color: #218838;
         }
-        .hidden {
-            display: none;
-        }
-        .product-list {
-            margin-top: 20px;
-        }
-        .product-item {
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .product-item img {
-            max-width: 100px;
-            margin-right: 20px;
-            border-radius: 5px;
-        }
-        .product-details {
-            flex-grow: 1;
-        }
-        .delete-btn {
-            background-color: #d9534f;
-        }
-        .delete-btn:hover {
-            background-color: #c9302c;
+
+        #message {
+            text-align: center;
+            margin-top: 10px;
         }
     </style>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-storage.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
+            authDomain: "my-shop-a83b9.firebaseapp.com",
+            projectId: "my-shop-a83b9",
+            storageBucket: "my-shop-a83b9.appspot.com",
+            messagingSenderId: "202845965176",
+            appId: "1:202845965176:web:e0bc43b4ac25309329168d"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const addProductButton = document.getElementById('addProductButton');
+
+            addProductButton.addEventListener('click', async () => {
+                const name = document.getElementById('productName').value;
+                const price = document.getElementById('productPrice').value;
+                const imageFile = document.getElementById('productImage').files[0];
+
+                if (name && price && imageFile) {
+                    const storageRef = ref(storage, 'product_images/' + imageFile.name);
+                    await uploadBytes(storageRef, imageFile);
+                    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/my-shop-a83b9.appspot.com/o/product_images%2F${encodeURIComponent(imageFile.name)}?alt=media`;
+
+                    try {
+                        await addDoc(collection(db, 'products'), {
+                            name: name,
+                            price: parseFloat(price),
+                            imageUrl: imageUrl
+                        });
+                        document.getElementById('message').innerText = 'Товар успешно добавлен!';
+                    } catch (error) {
+                        console.error("Ошибка добавления товара: ", error);
+                        document.getElementById('message').innerText = 'Ошибка добавления товара.';
+                    }
+                } else {
+                    document.getElementById('message').innerText = 'Пожалуйста, заполните все поля.';
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>Админ-панель</h1>
-
-        <!-- Форма входа -->
-        <form id="loginForm">
-            <label for="adminCode">Введите код для доступа:</label>
-            <input type="password" id="adminCode" placeholder="Код доступа" required>
-            <button type="submit">Войти</button>
-            <p id="loginError" style="color:red;"></p>
-        </form>
-
-        <!-- Форма добавления товара (скрыта по умолчанию) -->
-        <div id="addProductSection" class="hidden">
-            <h2>Добавить товар</h2>
-            <form id="addProductForm">
-                <label for="productName">Название товара:</label>
-                <input type="text" id="productName" placeholder="Введите название товара" required>
-                
-                <label for="productPrice">Цена товара (сомони):</label>
-                <input type="number" id="productPrice" placeholder="Введите цену товара" min="0" step="0.01" required>
-                
-                <label for="productImage">Изображение товара:</label>
-                <input type="file" id="productImage" accept="image/*" required>
-                
-                <button type="submit">Добавить товар</button>
-            </form>
-
-            <h2>Список товаров</h2>
-            <div id="productList" class="product-list">
-                <!-- Здесь будут отображаться добавленные товары -->
-            </div>
-        </div>
+        <h1>Добавление товара</h1>
+        <input type="text" id="productName" placeholder="Название товара">
+        <input type="number" id="productPrice" placeholder="Цена товара">
+        <input type="file" id="productImage">
+        <button id="addProductButton">Добавить товар</button>
+        <div id="message"></div>
     </div>
-
-    <script>
-        const ADMIN_CODE = "FAYS+";
-
-        // Получение элементов
-        const loginForm = document.getElementById('loginForm');
-        const adminCodeInput = document.getElementById('adminCode');
-        const loginError = document.getElementById('loginError');
-        const addProductSection = document.getElementById('addProductSection');
-        const addProductForm = document.getElementById('addProductForm');
-        const productList = document.getElementById('productList');
-
-        // Обработчик входа
-        loginForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const enteredCode = adminCodeInput.value.trim();
-            if (enteredCode === ADMIN_CODE) {
-                loginForm.classList.add('hidden');
-                addProductSection.classList.remove('hidden');
-                loadProducts();
-            } else {
-                loginError.textContent = "Неверный код доступа!";
-            }
-        });
-
-        // Обработчик добавления товара
-        addProductForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            const name = document.getElementById('productName').value.trim();
-            const price = parseFloat(document.getElementById('productPrice').value.trim()).toFixed(2);
-            const imageFile = document.getElementById('productImage').files[0];
-
-            if (name === "" || isNaN(price) || !imageFile) {
-                alert("Пожалуйста, заполните все поля и выберите изображение.");
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const imageBase64 = e.target.result;
-
-                const products = JSON.parse(localStorage.getItem('products')) || [];
-                const newProduct = {
-                    id: Date.now(),
-                    name: name,
-                    price: price,
-                    image: imageBase64
-                };
-                products.push(newProduct);
-                localStorage.setItem('products', JSON.stringify(products));
-
-                addProductForm.reset();
-                loadProducts();
-                alert("Товар добавлен успешно!");
-            };
-            reader.readAsDataURL(imageFile);
-        });
-
-        // Функция загрузки и отображения товаров
-        function loadProducts() {
-            const products = JSON.parse(localStorage.getItem('products')) || [];
-            productList.innerHTML = "";
-
-            if (products.length === 0) {
-                productList.innerHTML = "<p>Нет добавленных товаров.</p>";
-                return;
-            }
-
-            products.forEach(product => {
-                const productDiv = document.createElement('div');
-                productDiv.classList.add('product-item');
-
-                const img = document.createElement('img');
-                img.src = product.image;
-                img.alt = product.name;
-
-                const detailsDiv = document.createElement('div');
-                detailsDiv.classList.add('product-details');
-                detailsDiv.innerHTML = `<strong>${product.name}</strong><br>Цена: ${product.price} сомони`;
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.textContent = "Удалить";
-                deleteBtn.classList.add('delete-btn');
-                deleteBtn.addEventListener('click', function() {
-                    deleteProduct(product.id);
-                });
-
-                productDiv.appendChild(img);
-                productDiv.appendChild(detailsDiv);
-                productDiv.appendChild(deleteBtn);
-
-                productList.appendChild(productDiv);
-            });
-        }
-
-        // Функция удаления товара
-        function deleteProduct(id) {
-            let products = JSON.parse(localStorage.getItem('products')) || [];
-            products = products.filter(product => product.id !== id);
-            localStorage.setItem('products', JSON.stringify(products));
-            loadProducts();
-            alert("Товар удален.");
-        }
-            </script>
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDWcARyL4QqA_ofcYgBeEkXxvxOqFmg2hQ",
-    authDomain: "project-2f57a.firebaseapp.com",
-    projectId: "project-2f57a",
-    storageBucket: "project-2f57a.appspot.com",
-    messagingSenderId: "3707441883",
-    appId: "1:3707441883:web:384973fc7497f30f9f32fe",
-    measurementId: "G-E9655ZHG3Z"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-    
 </body>
 </html>
