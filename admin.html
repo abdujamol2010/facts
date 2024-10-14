@@ -26,7 +26,7 @@
             text-align: center;
         }
 
-        input[type="text"], input[type="url"] {
+        input[type="text"], input[type="url"], input[type="file"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -57,6 +57,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
@@ -69,6 +70,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         document.addEventListener('DOMContentLoaded', function () {
             const addProductButton = document.getElementById('addProductButton');
@@ -76,19 +78,27 @@
             addProductButton.addEventListener('click', async () => {
                 const productName = document.getElementById('productName').value;
                 const productPrice = document.getElementById('productPrice').value;
-                const productImageUrl = document.getElementById('productImageUrl').value;
+                const productImageFile = document.getElementById('productImage').files[0];
 
-                if (productName && productPrice && productImageUrl) {
+                if (productName && productPrice && productImageFile) {
                     try {
+                        // Загружаем изображение в Firebase Storage
+                        const imageRef = ref(storage, 'images/' + productImageFile.name);
+                        await uploadBytes(imageRef, productImageFile);
+
+                        // Получаем URL загруженного изображения
+                        const imageUrl = await getDownloadURL(imageRef);
+
+                        // Сохраняем данные товара в Firestore
                         await addDoc(collection(db, 'products'), {
                             name: productName,
                             price: parseFloat(productPrice),
-                            imageUrl: productImageUrl
+                            imageUrl: imageUrl
                         });
                         document.getElementById('message').innerText = 'Товар успешно добавлен!';
                         document.getElementById('productName').value = '';
                         document.getElementById('productPrice').value = '';
-                        document.getElementById('productImageUrl').value = '';
+                        document.getElementById('productImage').value = '';
                     } catch (error) {
                         console.error("Ошибка добавления документа: ", error);
                         document.getElementById('message').innerText = 'Ошибка добавления товара.';
@@ -105,7 +115,7 @@
         <h1>Добавить товар</h1>
         <input type="text" id="productName" placeholder="Название товара">
         <input type="text" id="productPrice" placeholder="Цена товара">
-        <input type="url" id="productImageUrl" placeholder="URL изображения товара">
+        <input type="file" id="productImage" accept="image/*">
         <button id="addProductButton">Добавить товар</button>
         <div id="message"></div>
     </div>
