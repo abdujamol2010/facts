@@ -2,174 +2,43 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Оформление заказа</title>
-    <!-- Встроенные стили -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Page</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: url('https://your-background-image-url.com') no-repeat center center fixed;
-            background-size: cover;
-            margin: 0;
-            padding: 0;
-            position: relative;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #fbc2eb, #a6c1ee);
             color: #333;
-        }
-
-        /* Эффект наложения для фона */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            z-index: 1;
+            margin: 0;
+            padding: 20px;
         }
 
         .container {
-            position: relative;
-            z-index: 2;
-            max-width: 1200px;
-            margin: 50px auto;
-            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
             background: #fff;
-            border-radius: 15px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-        }
-
-        .logo {
-            text-align: center;
-            font-size: 2em;
-            font-weight: bold;
-            color: #ff7e5f;
-            margin-bottom: 20px;
-            position: relative;
-        }
-
-        /* Добавление фона с текстом "FAYZ+" */
-        .logo::after {
-            content: 'FAYZ+';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1em;
-            color: rgba(0, 0, 0, 0.1);
-            z-index: -1;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
         h1, h2 {
             text-align: center;
-            color: #333;
         }
 
-        .product-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 30px;
+        .order-list {
+            margin-top: 20px;
         }
 
-        .product-item {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            width: 250px;
-            padding: 15px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .product-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .product-item img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-
-        .product-item h3 {
-            margin: 10px 0 5px;
-            font-size: 1.2em;
-            color: #ff7e5f;
-        }
-
-        .product-item p {
-            margin: 5px 0;
-            font-size: 1em;
-            color: #555;
-        }
-
-        .quantity-input {
-            width: 60px;
-            padding: 5px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .order-section {
-            background: #f1f1f1;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .order-section input[type="text"],
-        .order-section input[type="tel"] {
-            width: calc(100% - 22px);
+        .order-item {
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .order-section button {
-            width: 100%;
-            padding: 12px;
-            background-color: #25D366;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .order-section button:hover {
-            background-color: #1DA851;
-        }
-
-        #orderMessage {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 1em;
-            color: green;
-        }
-
-        /* Медиа-запросы для адаптивности */
-        @media (max-width: 768px) {
-            .product-list {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .product-item {
-                width: 80%;
-            }
+            border-bottom: 1px solid #ccc;
         }
     </style>
-    <!-- Встроенные скрипты -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-    <script>
-        // Ваш Firebase конфигурационный объект
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
             authDomain: "my-shop-a83b9.firebaseapp.com",
@@ -179,147 +48,33 @@
             appId: "1:202845965176:web:e0bc43b4ac25309329168d"
         };
 
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         document.addEventListener('DOMContentLoaded', function () {
-            const productListDiv = document.getElementById('productList');
-            const orderButton = document.getElementById('placeOrderButton');
-            const orderMessage = document.getElementById('orderMessage');
+            const orderList = document.getElementById('orderList');
 
-            // Функция загрузки товаров из Firestore
-            function loadProducts() {
-                db.collection('products').get()
-                    .then((querySnapshot) => {
-                        if (querySnapshot.empty) {
-                            productListDiv.innerHTML = "<p>В настоящее время нет доступных товаров.</p>";
-                            return;
-                        }
-
-                        productListDiv.innerHTML = ""; // Очистка списка перед загрузкой
-
-                        querySnapshot.forEach((doc) => {
-                            const product = doc.data();
-                            displayProduct(product);
-                        });
-                    })
-                    .catch((error) => {
-                        console.error("Ошибка при получении товаров: ", error);
-                        productListDiv.innerHTML = "<p>Ошибка при загрузке товаров.</p>";
-                    });
-            }
-
-            // Функция для отображения товара на странице
-            function displayProduct(product) {
-                const productDiv = document.createElement('div');
-                productDiv.classList.add('product-item');
-
-                const img = document.createElement('img');
-                img.src = product.imageUrl;
-                img.alt = product.name;
-
-                const name = document.createElement('h3');
-                name.textContent = product.name;
-
-                const price = document.createElement('p');
-                price.textContent = `Цена: ${product.price} сомони`;
-
-                const quantityInput = document.createElement('input');
-                quantityInput.type = 'number';
-                quantityInput.min = '0';
-                quantityInput.value = '0';
-                quantityInput.classList.add('quantity-input');
-
-                productDiv.appendChild(img);
-                productDiv.appendChild(name);
-                productDiv.appendChild(price);
-                productDiv.appendChild(quantityInput);
-
-                productListDiv.appendChild(productDiv);
-            }
-
-            // Загрузка товаров при загрузке страницы
-            loadProducts();
-
-            // Обработчик отправки заказа через WhatsApp
-            orderButton.addEventListener('click', function () {
-                const customerAddress = document.getElementById('customerAddress').value.trim();
-                const customerPhone = document.getElementById('customerPhone').value.trim();
-
-                if (customerAddress === "" || customerPhone === "") {
-                    alert("Пожалуйста, заполните все поля.");
-                    return;
-                }
-
-                // Проверка формата номера телефона (Таджикистан: +992 и 9 цифр)
-                const phonePattern = /^\+?992\d{9}$/;
-                if (!phonePattern.test(customerPhone)) {
-                    alert("Пожалуйста, введите корректный номер телефона (например, +992123456789).");
-                    return;
-                }
-
-                // Сбор информации о заказанных товарах
-                const orderedProducts = [];
-                const productItems = document.querySelectorAll('.product-item');
-
-                productItems.forEach(item => {
-                    const name = item.querySelector('h3').textContent;
-                    const priceText = item.querySelector('p').textContent;
-                    const price = priceText.match(/Цена: (\d+(\.\d+)?) сомони/)[1];
-                    const quantity = parseInt(item.querySelector('.quantity-input').value);
-
-                    if (quantity > 0) {
-                        orderedProducts.push(`${name} - ${quantity} шт.`);
-                    }
-                });
-
-                if (orderedProducts.length === 0) {
-                    alert("Пожалуйста, выберите хотя бы один товар.");
-                    return;
-                }
-
-                // Формирование сообщения для WhatsApp
-                const message = `📦 *Новый заказ*\n\n*Адрес:* ${customerAddress}\n*Телефон:* ${customerPhone}\n\n*Товары:*\n${orderedProducts.join('\n')}`;
-
-                const whatsappNumber = '992928001604'; // Ваш номер без +, но с кодом страны
-                const url = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
-                // Открытие WhatsApp с предзаполненным сообщением
-                window.open(url, '_blank');
-
-                // Вывод сообщения об успешной отправке
-                orderMessage.textContent = "Ваш заказ отправлен через WhatsApp!";
-                document.getElementById('orderForm').reset();
-
-                // Сброс количеств товаров
-                productItems.forEach(item => {
-                    item.querySelector('.quantity-input').value = '0';
+            onSnapshot(collection(db, 'products'), (snapshot) => {
+                orderList.innerHTML = '';
+                snapshot.forEach((doc) => {
+                    const product = doc.data();
+                    const orderItem = document.createElement('div');
+                    orderItem.classList.add('order-item');
+                    orderItem.innerHTML = `
+                        <h3>${product.name}</h3>
+                        <p>Цена: ${product.price}</p>
+                        <img src="${product.imageUrl}" alt="${product.name}" style="max-width: 100%; height: auto;">
+                    `;
+                    orderList.appendChild(orderItem);
                 });
             });
         });
     </script>
 </head>
 <body>
-    <div class="overlay"></div>
     <div class="container">
-        <div class="logo">FAYZ+</div>
-        <h1>Оформление заказа</h1>
-        
-        <div class="product-list" id="productList">
-            <!-- Товары будут добавлены здесь динамически -->
-        </div>
-
-        <div class="order-section">
-            <h2>Ваши данные</h2>
-            <form id="orderForm">
-                <input type="text" id="customerAddress" placeholder="Ваш адрес" required>
-                <input type="tel" id="customerPhone" placeholder="Номер телефона (например, +992123456789)" pattern="^\+?992\d{9}$" required>
-                <button type="button" id="placeOrderButton">Оформить заказ через WhatsApp</button>
-            </form>
-            <div id="orderMessage"></div>
-        </div>
+        <h1>Заказы</h1>
+        <div class="order-list" id="orderList"></div>
     </div>
 </body>
-            </html>
+</html>
