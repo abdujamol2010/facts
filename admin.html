@@ -26,7 +26,7 @@
             text-align: center;
         }
 
-        input {
+        input[type="text"], input[type="url"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -51,15 +51,13 @@
         #message {
             text-align: center;
             margin-top: 10px;
+            color: green;
         }
     </style>
     <script type="module">
-        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/9.19.1/firebase-storage.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCKp8foFvUuDpTAQm6I90BZEXy8MwMf_NA",
             authDomain: "my-shop-a83b9.firebaseapp.com",
@@ -69,33 +67,30 @@
             appId: "1:202845965176:web:e0bc43b4ac25309329168d"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
 
         document.addEventListener('DOMContentLoaded', function () {
             const addProductButton = document.getElementById('addProductButton');
 
             addProductButton.addEventListener('click', async () => {
-                const name = document.getElementById('productName').value;
-                const price = document.getElementById('productPrice').value;
-                const imageFile = document.getElementById('productImage').files[0];
+                const productName = document.getElementById('productName').value;
+                const productPrice = document.getElementById('productPrice').value;
+                const productImageUrl = document.getElementById('productImageUrl').value;
 
-                if (name && price && imageFile) {
-                    const storageRef = ref(storage, 'product_images/' + imageFile.name);
-                    await uploadBytes(storageRef, imageFile);
-                    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/my-shop-a83b9.appspot.com/o/product_images%2F${encodeURIComponent(imageFile.name)}?alt=media`;
-
+                if (productName && productPrice && productImageUrl) {
                     try {
                         await addDoc(collection(db, 'products'), {
-                            name: name,
-                            price: parseFloat(price),
-                            imageUrl: imageUrl
+                            name: productName,
+                            price: parseFloat(productPrice),
+                            imageUrl: productImageUrl
                         });
                         document.getElementById('message').innerText = 'Товар успешно добавлен!';
+                        document.getElementById('productName').value = '';
+                        document.getElementById('productPrice').value = '';
+                        document.getElementById('productImageUrl').value = '';
                     } catch (error) {
-                        console.error("Ошибка добавления товара: ", error);
+                        console.error("Ошибка добавления документа: ", error);
                         document.getElementById('message').innerText = 'Ошибка добавления товара.';
                     }
                 } else {
@@ -107,10 +102,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Добавление товара</h1>
+        <h1>Добавить товар</h1>
         <input type="text" id="productName" placeholder="Название товара">
-        <input type="number" id="productPrice" placeholder="Цена товара">
-        <input type="file" id="productImage">
+        <input type="text" id="productPrice" placeholder="Цена товара">
+        <input type="url" id="productImageUrl" placeholder="URL изображения товара">
         <button id="addProductButton">Добавить товар</button>
         <div id="message"></div>
     </div>
